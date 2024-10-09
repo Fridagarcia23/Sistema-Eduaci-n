@@ -64,6 +64,17 @@
 </head>
 <body>
     <div class="login-container">
+        <% if (error) { %>
+            <div id="alert" class="alert alert-danger" role="alert">
+                <%= error %>
+            </div>
+            <script>
+                // Ocultar la alerta después de 3 segundos
+                setTimeout(function() {
+                    document.getElementById('alert').style.display = 'none';
+                }, 3000);
+            </script>
+        <% } %>
         <img src="/img/cecec.png" alt="Logo">
         <h1 class="text-center">Login Profesor</h1>
         <form action="/login-profesor" method="POST">
@@ -76,9 +87,6 @@
                 <input type="password" class="form-control" id="contraseña" name="contraseña" placeholder="Ingresa tu contraseña" required>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
-            <div class="forgot-password">
-                <a href="/reset-profesor">¿Olvidaste tu contraseña?</a>
-            </div>
         </form>
     </div>
     <div class="footer">

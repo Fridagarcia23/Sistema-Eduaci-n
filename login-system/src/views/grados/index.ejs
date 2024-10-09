@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD de Grados</title>
+    <title>Gestion de Grados</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Versión completa de jQuery -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Margarine:wght@400;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
 
     <style>
          /* Estilo básico para el menú lateral */
@@ -67,8 +66,9 @@
         }
         
         .header {
-            background-color: #4b6584;
-            color: #fff;
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #030303;
             padding: 12px;
             position: fixed;
             top: 0;
@@ -121,13 +121,14 @@
         }
 
         /* Estilos de los mensajes emergentes */
-#messageBox {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1050;
-    width: 300px;
-}
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            width: 300px;
+        }
+        
         /* Estilo básico para la tabla */
         .table {
             position:relative;
@@ -308,26 +309,85 @@
         #btnAddGrade i {
             margin-right: 1px; /* Espacio entre el ícono y el texto */
         }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+
+        /* Fondo transparente que cubre toda la página */
+       /* Fondo transparente que cubre toda la página */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Contenido del cargando */
+.loading-content {
+    text-align: center;
+    color: white;
+    font-size: 24px;
+}
+
+/* Ícono de carga */
+.loading-content i {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
     </style>
 </head>
 <body>
     <!-- Menú lateral -->
     <nav class="sidebar">
-        <ul class="nav-links">
-            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
-            <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
-            <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
-            <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
-            <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-            <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-            <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-            <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
-            <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
-            <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
-            <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-            <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
-        </ul>
+        <div class="nav-category">
+            <h3><i class="fas fa-cogs"></i> Administración</h3>
+            <ul class="nav-links">
+                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+            <ul class="nav-links">
+                <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+            <ul class="nav-links">
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
+                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+            <ul class="nav-links">
+                <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
+            </ul>
+        </div>        
     </nav>
     <header class="header">
         <div class="header-logo">
@@ -338,7 +398,7 @@
     <div class="container">
         <div class="header-section">
             <h1 class="mt-4">Grados</h1>
-            <button id="btnAddGrade" class="btn btn-primary mb-4" data-toggle="modal" data-target="#gradeModal"> <i class="fas fa-user-plus"></i> Agregar Nuevo Grado</button></div>
+            <button id="btnAddGrade" class="btn btn-primary mb-4" data-toggle="modal" data-target="#gradeModal"> <i class="fas fa-user-plus"></i> Agregar Grado</button></div>
         
             <!-- Opciones de cantidad de registros por página -->
         <div class="records-per-page-container">
@@ -369,6 +429,15 @@
             </thead>
             <tbody id="gradeTableBody">
                 <!-- Los datos se llenarán con JavaScript -->
+
+                <!-- Contenedor de carga -->
+<div id="loading" style="display: none;" class="loading-overlay">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando...</p>
+    </div>
+</div>
+            
             </tbody>
         </table>
          <!-- Paginación -->
@@ -635,6 +704,8 @@ $('#editGradeForm').on('submit', function(e) {
         loadGrades(); // Llamamos a loadGrades() cuando el documento está listo
     });
 
+    
+
     function applyFilter(grados) {
         const nameFilter = $('#nameFilter').val().toLowerCase();
         const nivelFilter = $('#nivelFilter').val().toLowerCase();
@@ -676,7 +747,25 @@ $('#editGradeForm').on('submit', function(e) {
     $('#nameFilter, #nivelFilter, #seccionesFilter').on('input', function() {
         loadGrades(); // Recarga los datos y aplica el filtro
     });
-        
+    //cargando
+    document.addEventListener("DOMContentLoaded", function () {
+        const loading = document.getElementById('loading');
+    
+        // Selecciona los enlaces del menú lateral
+        const moduleLinks = document.querySelectorAll('.nav-links a');
+    
+        moduleLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                // Mostrar el mensaje de "Cargando"
+                loading.style.display = 'flex';
+    
+                // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 8000); // Puedes ajustar el tiempo según lo que necesites
+            });
+        });
+    });        
 </script>
 </body>
 </html>

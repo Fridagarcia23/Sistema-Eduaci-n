@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Administrador</title>
-    <!-- Enlace a Google Fonts para la tipografía Margarine -->
-    <link href="https://fonts.googleapis.com/css2?family=Margarine:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Enlace a Font Awesome para íconos -->
+    <title>Módulo de Profesores</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
     <style>
+        .pagination {
+            margin-top: 3px;
+            justify-content: center; /* Centrar la paginación */
+        }
+        /* Estilos de los mensajes emergentes */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            width: 300px;
+        }
         body {
             margin: 0;
             font-family: 'Margarine', sans-serif;
@@ -16,275 +28,857 @@
             min-height: 100vh;
             background-color: #f7f7f7;
         }
-        .sidebar {
-            width: 250px;
-            background-color: #2a2d34;
-            color: #fff;
-            position: fixed;
-            height: 100%;
-            top: 0;
-            left: 0;
+        .button-group {
             display: flex;
-            flex-direction: column;
-            transition: left 0.3s ease;
-            overflow: auto;
+            gap: 5px; /* Reduce el espacio entre los botones */
         }
+        
+        .button-group .btn {
+            margin: 0; /* Asegúrate de que no haya márgenes adicionales */
+            padding: 10px 10px; /* Ajusta el padding para que los botones sean más pequeños si es necesario */
+        }
+        
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px;
+            font-size: 16px;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* contenedores de filtro */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-top: -3px;
+            margin-left: 280px;
+        }
+        
+        .filters input[type="text"],
+        .filters select {
+            max-width: 200px;
+            padding: 8px 12px; /* Espaciado interno */
+            font-weight: normal; /* Normalizar el peso del texto */
+            color: #333; /* Texto negro oscuro */
+            background-color: #fff; /* Fondo blanco */
+            border: 1px solid #ccc; /* Borde gris */
+            border-radius: 4px; /* Bordes redondeados */
+        }
+        
+        .filters input[type="text"]::placeholder {
+            color: #666; /* Color del placeholder */
+        }
+        
+        .filters select {
+            padding-left: 10px; /* Espacio a la izquierda para el select */
+        }
+        
+        /* Tabla */
+        .table {
+            width: 80%; /* Ajusta según sea necesario */
+            max-width: 800px;
+            margin: 20px auto;
+            border-collapse: collapse; /* Mantiene las celdas juntas */
+            margin-left: 280px;
+            table-layout: auto; /* Permite que las columnas se ajusten automáticamente */
+        }
+        
+        .table th, .table td {
+            padding: 11px;
+            text-align: left;
+            border: none; /* Elimina bordes en las celdas */
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background-color: #f2f2f2; /* Alterna el color de fondo */
+        }
+        
+        .table thead th {
+            background-color: #359b16;
+            color: white; /* Color del texto en el encabezado */
+        }
+        
+        /* Para asegurar que la columna de grados se ajuste correctamente */
+        .table td:nth-child(6) { /* Columna de Grados */
+            white-space: normal; /* Permite que el texto se divida en líneas */
+        }
+        
+        
+        /* Estilo para el botón de Crear Usuario */
+        /* Botón */
+        /* Botón */
+        .btn-custom {
+            font-size: 16px;
+            padding: 8px 15px;
+            margin-left: 0; /* Asegura que el botón esté alineado al título */
+            margin-bottom: 10px; /* Reduce el espacio entre el botón y el filtro */
+            display: inline-block; /* Para que respete el ancho de su contenido */
+        }
+        
+        /* Modales */
+        .modal-header {
+        background-color: #007bff;
+        color: white;
+        }
+        
+        .modal-header .btn-close {
+        color: white;
+        }
+        
+        /* Botones dentro de los modales */
+        .modal .btn {
+        margin-top: 10px;
+        }
+        
+        /* Contenido del dashboard */
+        .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        }
+        
+        .sidebar {
+        width: 250px;
+        background-color: #2a2d34;
+        color: #fff;
+        position: fixed;
+        height: 100%;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        transition: left 0.3s ease;
+        overflow: auto;
+        }
+        
         .sidebar.active {
-            left: 0;
+        left: 0;
         }
+        
+        .nav-links li {
+        position: relative;
+        }
+        
         .nav-links {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        .nav-links li {
-            position: relative;
-        }
+        
         .nav-links a {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 13.5px;
             color: #fff;
             text-decoration: none;
             position: relative;
         }
+        
+        /* Animación de movimiento para cada opción del menú al pasar el mouse */
         .nav-links a:hover {
             background-color: #3e4149;
+            transform: translateY(-5px); /* Mueve la opción hacia arriba */
         }
-        .dropdown-content {
-            display: none;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            background-color: #2a2d34;
-            position: relative;
-            left: 0;
-            width: 100%;
+        
+        /* Animación de retorno a la posición original */
+        .nav-links a {
+            transition: transform 0.3s ease;
         }
-        .dropdown-content li {
-            padding: 0;
+        
+        .nav-links a:hover {
+            background-color: #3e4149; /* Cambia el color de fondo al pasar el mouse */
         }
-        .dropdown-content a {
-            padding: 10px 15px;
-            color: #fff;
-            text-decoration: none;
-            display: block;
-        }
-        .dropdown-content a:hover {
-            background-color: #3e4149;
-        }
-        .show {
-            display: block;
-        }
+        
         .header {
-            background-color: #4b6584;
-            color: #fff;
-            padding: 10px;
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #030303;
+            padding: 12px;
             position: fixed;
             top: 0;
             left: 250px;
             width: calc(100% - 250px);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between; /* Centra el contenido */
             z-index: 1000;
         }
+        
         .header-logo img {
             height: 80px;
             margin-right: 15px;
         }
+        
         .header h1 {
             font-weight: 800;
             font-size: 1.8em;
             text-align: center; /* Asegura que el texto esté centrado dentro de su contenedor */
             margin: 0 auto; /* Centra el título dentro de su contenedor */
         }
-        .profile-header {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-        .profile-header img {
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-        }
-        .profile-header .profile-info {
-            margin-right: 30px;
-            color: #fff;
-        }
-        .profile-header .profile-info .name {
-            font-size: 1em;
-        }
-        .profile-header .profile-info .role {
-            font-size: 0.8em;
-            color: #cfcfcf;
-        }
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(104, 19, 19, 0.1);
-            z-index: 1001;
-            overflow: hidden;
-        }
-        .dropdown-menu a {
-            display: flex;
-            align-items: center;
-            padding: 10px 20px;
-            color: #333;
-            text-decoration: none;
-        }
-        .dropdown-menu a i {
-            margin-right: 10px;
-        }
-        .dropdown-menu a:hover {
-            background-color: #f7f7f7;
-        }
-        .profile-header:hover .dropdown-menu {
-            display: block;
-        }
-        /* Animación de movimiento para cada opción del menú al pasar el mouse */
-        .nav-links a:hover {
-            background-color: #3e4149;
-            transform: translateY(-5px); /* Mueve la opción hacia arriba */
-        }
-        /* Animación de retorno a la posición original */
-        .nav-links a {
-            transition: transform 0.3s ease;
-        }
-        .nav-links a:hover {
-            background-color: #3e4149; /* Cambia el color de fondo al pasar el mouse */
-        }
-        .dashboard-container {
+        
+        .content {
             margin-left: 250px;
             margin-top: 60px;
             padding: 20px;
-            width: calc(100% - 250px);
-        }
-        .modules-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .module {
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            color: #333;
-            text-align: center;
-            padding: 20px;
-            width: calc(25% - 20px);
-            transition: transform 0.3s;
-        }
-        .module:hover {
-            transform: translateY(-5px);
-        }
-        .module h3 {
-            margin: 10px 0;
-            font-size: 1.2em;
-            font-weight: 600;
-        }
-        .footer {
-            background-color: #4b6584;
-            color: #fff;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: calc(100% - 250px);
-            margin-left: 250px;
-        }
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 200px;
-            }
-            .sidebar.active {
-                left: 0;
-            }
-            .header, .footer {
-                left: 200px;
-                width: calc(100% - 200px);
-            }
-            .dashboard-container {
-                margin-left: 200px;
-                width: calc(100% - 200px);
-            }
-        }
-        .toggle-sidebar-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: #4b6584;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            z-index: 1001;
         }
         
-        /* Estilos adicionales para el submenú */
-        .submenu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: none;
-            background-color: #2a2d34;
+        .button-container {
+            display: flex;
+            align-items: center; /* Alinear botones verticalmente */
+            gap: 10px; /* Espacio entre botones */
         }
-        .submenu li {
-            padding: 0;
+        
+        .button-container {
+            display: flex;
+            justify-content: flex-end; /* Alinea los botones a la derecha */
+            margin-top: 20px; /* Espacio entre el título y los botones */
+            margin-right: 290px; /* Espacio a la derecha para mover los botones */
         }
-        .submenu a {
-            padding: 10px 15px;
-            color: #fff;
-            text-decoration: none;
-            display: block;
+        
+        .button-container .btn {
+            margin-left: 10px; /* Espacio entre los botones */
         }
-        .submenu a:hover {
-            background-color: #3e4149;
+        /* Título */
+        /* Título */
+        .module-title {
+            font-weight: 800;
+            font-size: 1.8em;
+            margin-bottom: 5px; /* Reduce el espacio entre el título y el botón */
+            margin-left: 0; /* Asegura que el título no tenga desplazamiento */
         }
-        .submenu.show {
-            display: block;
+
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
         }
-        .dropdown-arrow {
-            float: right;
-            margin-left: auto;
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
         }
-    </style>
+        /* Fondo transparente que cubre toda la página */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+        }
+
+        /* Contenido del cargando */
+        .loading-content {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Ícono de carga */
+        .loading-content i {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        /* Nuevo contenedor para agrupar el título y el botón */
+        .header-section {
+            display: flex;
+            flex-direction: column; /* Los elementos se alinearán en columna (uno debajo del otro) */
+            align-items: flex-start; /* Alinea los elementos a la izquierda */
+            margin-left: 280px; /* Asegura que estén alineados con el resto del contenido */
+            margin-right: 290px; /* Espacio a la derecha */
+            margin-top: 100px; /* Espacio desde arriba */
+            padding: 10px 0; /* Espaciado interno */
+        }
+            </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <ul class="nav-links">
-            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
-            <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
-            <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
-            <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
-            <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-            <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-            <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-            <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
-            <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
-            <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
-            <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-            <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
-        </ul>
-    </nav>
-    <header class="header">
-        <div class="header-logo">
-            <img src="/img/home.jpg" alt="Logo">
+    <div id="loading" style="display: none;" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando...</p>
         </div>
-        <h1>CENTRO ESCOLAR CECEC</h1>
-    </header>
-    <script>
+    </div>
+    <div class="dashboard-container">
+        
+        <!-- Cabecera -->
+        <header class="header">
+            <div class="header-logo">
+                <img src="/img/home.jpg" alt="Logo">
+            </div>
+            <h1>CENTRO ESCOLAR CECEC</h1>
+        </header>
+        <div class="dashboard-container">
+            <!-- Menú lateral -->
+            <nav class="sidebar">
+                <div class="nav-category">
+                    <h3><i class="fas fa-cogs"></i> Administración</h3>
+                    <ul class="nav-links">
+                        <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                        <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                        <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                        <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-category">
+                    <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+                    <ul class="nav-links">
+                        <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                        <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                        <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                        <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-category">
+                    <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+                    <ul class="nav-links">
+                        <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
+                        <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-category">
+                    <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+                    <ul class="nav-links">
+                        <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                        <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
+                    </ul>
+                </div>        
+            </nav>
+</head>
+<body>
+
+    <div class="header-section">
+        <h2 class="module-title">Profesores</h2>
+        <button type="button" class="btn btn-primary btn-custom" data-toggle="modal" data-target="#modalAgregar">
+            <i class="fas fa-user-plus"></i> Agregar Profesor
+        </button>
+    </div>
+    
+            <div class="filters">
+            <input type="text" id="filter_nombre" placeholder="Nombre">
+            <input type="text" id="filter_especialidad" placeholder="Especialidad">
+            <input type="text" id="filter_grado" placeholder="Grado">
+            <input type="text" id="filter_seccion" placeholder="Sección">
+        </div>
+
+        <div class="table-container">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Especialidad</th>
+                        <th>Años de Experiencia</th>
+                        <th>Grados</th>
+                        <th>Secciones</th>
+                        <th>Fecha Ingreso</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProfesores">
+                    <% profesores.forEach(profesor => { %>
+                        <tr>
+                            <td><%= profesor.id_profesor %></td>
+                            <td><%= profesor.nombre %></td>
+                            <td><%= profesor.email %></td>
+                            <td><%= profesor.especialidad %></td>
+                            <td><%= profesor.experiencia_years %></td>
+                            <td><%= profesor.grados %></td>
+                            <td><%= profesor.secciones || 'N/A' %></td>
+                            <td>
+                                <% if (profesor.fecha_ingreso) { %>
+                                    <%= profesor.fecha_ingreso.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </td>
+                            <td>
+                                <div class="button-group">
+                                    <button class="btn btn-warning btnEditar" data-id="<%= profesor.id_profesor %>" data-toggle="modal" data-target="#modalEditar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger btnEliminar" data-id="<%= profesor.id_profesor %>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center" id="profesoresPagination">
+                <!-- Los botones de paginación se generarán aquí -->
+            </ul>
+        </nav>
         
 
+    <!-- Modal para agregar profesor -->
+    <!-- Modal para agregar profesor -->
+<div class="modal fade" id="modalAgregar" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Profesor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formAgregarProfesor">
+                    <div class="form-group">
+                        <label for="nombre">Nombre:</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Correo:</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="especialidad">Especialidad:</label>
+                        <input type="text" class="form-control" id="especialidad" name="especialidad" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="experiencia_years">Años de Experiencia:</label>
+                        <input type="number" class="form-control" id="experiencia_years" name="experiencia_years" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_grado">Grado</label>
+                        <select class="form-control" id="id_grado" name="id_grado" multiple="multiple" required>
+                            <option value="5">Primero Primaria</option>
+                            <option value="6">Segundo Primaria</option>
+                            <option value="7">Tercero Primaria</option>
+                            <option value="8">Cuarto Primaria</option>
+                            <option value="9">Quinto Primaria</option>
+                            <option value="12">Sexto Primaria</option>
+                            <option value="13">Primero Básico</option>
+                            <option value="14">Segundo Básico</option>
+                            <option value="15">Tercero Básico</option>
+                            <option value="20">Bachillerato en Ciencias Biológicas</option>
+                            <option value="21">Bachillerato en Computación</option>
+                            <option value="22">Bachillerato en Medicina</option>
+                            <option value="23">Bachillerato en Magisterio</option>
+                            <option value="26">Bachillerato en Turismo</option>
+                            <option value="27">Bachillerato en Criminología</option>
+                            <option value="29">Bachillerato en Secretariado</option>
+                            <option value="30">Perito Contador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_seccion">Sección</label>
+                        <select class="form-control" id="id_seccion" name="id_seccion" multiple="multiple" required>
+                            <option value="153">A</option>
+                            <option value="154">B</option>
+                            <option value="155">C</option>
+                            <option value="233">D</option>
+                        </select>
+                    </div>               
+
+                    <div class="form-group">
+                        <label for="fecha_ingreso">Fecha de Ingreso:</label>
+                        <input type="date" class="form-control" id="fecha_ingreso" name="fecha_ingreso" required>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Modal para editar profesor -->
+    <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Profesor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarProfesor">
+                        <input type="hidden" id="editarId" name="idProfesor" value="1">
+
+                        <div class="form-group">
+                            <label for="editarNombre">Nombre:</label>
+                            <input type="text" class="form-control" id="editarNombre" name="nombre" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editarEmail">Correo:</label>
+                            <input type="email" class="form-control" id="editarEmail" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editarEspecialidad">Especialidad:</label>
+                            <input type="text" class="form-control" id="editarEspecialidad" name="especialidad" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editarExperiencia">Años de Experiencia:</label>
+                            <input type="number" class="form-control" id="editarExperiencia" name="experiencia_years" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editarIdGrado">Grado</label>
+                            <select class="form-control" id="editarGrado" multiple="multiple" required>
+                                <option value="5">Primero Primaria</option>
+                                <option value="6">Segundo Primaria</option>
+                                <option value="7">Tercero Primaria</option>
+                                <option value="8">Cuarto Primaria</option>
+                                <option value="9">Quinto Primaria</option>
+                                <option value="12">Sexto Primaria</option>
+                                <option value="13">Primero Básico</option>
+                                <option value="14">Segundo Básico</option>
+                                <option value="15">Tercero Básico</option>
+                                <option value="20">Bachillerato en Ciencias Biológicas</option>
+                                <option value="21">Bachillerato en Computación</option>
+                                <option value="22">Bachillerato en Medicina</option>
+                                <option value="23">Bachillerato en Magisterio</option>
+                                <option value="26">Bachillerato en Turismo</option>
+                                <option value="27">Bachillerato en Criminología</option>
+                                <option value="29">Bachillerato en Secretariado</option>
+                                <option value="30">Perito Contador</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editarIdSeccion">Sección</label>
+                            <select class="form-control" id="editarSeccion" multiple="multiple" required>
+                                <option value="153">A</option>
+                                <option value="154">B</option>
+                                <option value="155">C</option>
+                                <option value="233">D</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editarFechaIngreso">Fecha de Ingreso:</label>
+                            <input type="date" class="form-control" id="editarFechaIngreso" name="fecha_ingreso" required>
+                        </div>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para confirmar eliminación -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Eliminar Profesor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este profesor?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnConfirmarEliminar" class="btn btn-danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Añade esto para mostrar mensajes -->
+<div id="messageBox" class="alert" style="display:none;"></div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
+    
+    <script>
+        function showMessage(type, message) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = `alert alert-${type}`;
+            messageBox.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+            messageBox.style.display = 'block'; // Muestra el mensaje
+            setTimeout(() => messageBox.style.display = 'none', 3000); // Oculta el mensaje después de 3 segundos
+        }
+
+        const registrosPorPagina = 5; // Ajusta este número según sea necesario
+        let paginaActual = 1;
+        // Obtén todos los registros (filas) de la tabla de profesores
+const profesoresTable = document.querySelectorAll("#tablaProfesores tr");
+
+// Calcula el número total de páginas
+const totalRegistros = profesoresTable.length;
+const totalPaginas = Math.ceil(totalRegistros / registrosPorPagina);
+
+// Función para mostrar la página actual
+function mostrarPagina(pagina) {
+    paginaActual = pagina;
+    // Oculta todas las filas
+    profesoresTable.forEach((row, index) => {
+        row.style.display = "none";
+        // Muestra solo las filas correspondientes a la página actual
+        if (index >= (pagina - 1) * registrosPorPagina && index < pagina * registrosPorPagina) {
+            row.style.display = "";
+        }
+    });
+}
+// Función para generar la barra de paginación
+function generarPaginacion() {
+    const paginacion = document.getElementById("profesoresPagination");
+    paginacion.innerHTML = ""; // Limpia la paginación actual
+
+    // Botón de página anterior
+    const anterior = document.createElement("li");
+    anterior.classList.add("page-item");
+    anterior.innerHTML = `<a class="page-link" href="#" aria-label="Anterior">&laquo;</a>`;
+    anterior.addEventListener("click", () => {
+        if (paginaActual > 1) {
+            mostrarPagina(paginaActual - 1);
+            actualizarPaginacion();
+        }
+    });
+    paginacion.appendChild(anterior);
+
+    // Botones de número de página
+    for (let i = 1; i <= totalPaginas; i++) {
+        const li = document.createElement("li");
+        li.classList.add("page-item");
+        if (i === paginaActual) li.classList.add("active");
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.addEventListener("click", () => {
+            mostrarPagina(i);
+            actualizarPaginacion();
+        });
+        paginacion.appendChild(li);
+    }
+
+    // Botón de página siguiente
+    const siguiente = document.createElement("li");
+    siguiente.classList.add("page-item");
+    siguiente.innerHTML = `<a class="page-link" href="#" aria-label="Siguiente">&raquo;</a>`;
+    siguiente.addEventListener("click", () => {
+        if (paginaActual < totalPaginas) {
+            mostrarPagina(paginaActual + 1);
+            actualizarPaginacion();
+        }
+    });
+    paginacion.appendChild(siguiente);
+}
+
+// Función para actualizar el estado de los botones de paginación
+function actualizarPaginacion() {
+    const botones = document.querySelectorAll("#profesoresPagination li");
+    botones.forEach((boton, index) => {
+        boton.classList.remove("active");
+        if (index === paginaActual) {
+            boton.classList.add("active");
+        }
+    });
+}
+
+// Inicializa mostrando la primera página
+mostrarPagina(paginaActual);
+generarPaginacion();
+        $(document).ready(function() {
+            //filtro
+             //filtro
+             $('.filters input').on('input change', function () {
+                const nombre = $('#filter_nombre').val().toLowerCase();
+                const especialidad = $('#filter_especialidad').val().toLowerCase();
+                const grado = $('#filter_grado').val().toLowerCase();
+                const seccion = $('#filter_seccion').val().toLowerCase();
+        
+                $('tbody tr').each(function () {
+                    const row = $(this);
+                    const matchesNombre = row.find('td:eq(1)').text().toLowerCase().includes(nombre);
+                    const matchesEspecialidad = row.find('td:eq(3)').text().toLowerCase().includes(especialidad);
+                    const matchesGrado = row.find('td:eq(5)').text().toLowerCase().includes(grado);
+                    const matchesSeccion = row.find('td:eq(6)').text().toLowerCase().includes(seccion);
+                    
+                    // Mostrar la fila si cumple con todas las condiciones
+                    row.toggle(matchesNombre && matchesEspecialidad && matchesGrado && matchesSeccion);
+                });
+            });
+            // Inicializar multiselect para editar
+            $('#editarGrado').multiselect();
+            $('#editarSeccion').multiselect();
+            
+            // Inicializar multiselect para agregar
+            $('#modalAgregar').on('shown.bs.modal', function () {
+                $('#id_grado').multiselect();
+                $('#id_seccion').multiselect();
+            });
+            
+    
+            // Eliminar profesor
+        // Eliminar profesor
+        $('#btnConfirmarEliminar').on('click', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: `/profesores/${id}`,
+                type: 'DELETE',
+                success: function(response) {
+                    $('#modalEliminar').modal('hide'); // Cierra el modal inmediatamente
+                    showMessage('success', 'Profesor eliminado correctamente.');
+                    setTimeout(() => location.reload(), 3000); // Recarga la página después de 3 segundos
+                },
+                error: function(error) {
+                    showMessage('danger', 'Error al eliminar el profesor.');
+                    console.error('Error al eliminar el profesor:', error);
+                }
+            });
+        });
+        $(document).on('click', '.btnEliminar', function() {
+            const id = $(this).data('id');
+            $('#btnConfirmarEliminar').data('id', id); // Asigna el ID al botón de confirmar
+            $('#modalEliminar').modal('show'); // Abre el modal
+        });
+        
+            // Manejo de edición
+$(document).on('click', '.btnEditar', function() {
+    const id = $(this).data('id');
+
+    // Obtener datos del profesor
+    $.get(`/profesores/${id}`, function(data) {
+        const profesor = data.profesor;
+        const grados = data.grados.map(g => g.id_grado); // Obtén solo los IDs de grado
+        const secciones = data.grados.map(g => g.id_seccion); // Obtén solo los IDs de sección
+
+        // Asignar los campos del formulario
+        $('#editarId').val(profesor.id_profesor);
+        $('#editarNombre').val(profesor.nombre);
+        $('#editarEmail').val(profesor.email);
+        $('#editarEspecialidad').val(profesor.especialidad);
+        $('#editarExperiencia').val(profesor.experiencia_years);
+        $('#editarFechaIngreso').val(profesor.fecha_ingreso.split('T')[0]);
+
+        // Limpia los selectores antes de establecer nuevos valores
+        $('#editarGrado').multiselect('clearAll');
+        $('#editarSeccion').multiselect('clearAll');
+
+        // Establecer los grados y secciones seleccionados
+        $('#editarGrado').val(grados).multiselect('refresh'); // Solo IDs de grado
+        $('#editarSeccion').val(secciones).multiselect('refresh'); // Solo IDs de sección
+
+        // Mostrar el modal
+        $('#modalEditar').modal('show');
+    }).fail(function() {
+        alert('Error al obtener los datos del profesor.');
+    });
+});
+            
+            // Agregar profesor
+         // Agregar profesor
+         $('#formAgregarProfesor').on('submit', function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: '/ruta/para/agregar/profesor', // Ajusta la URL según tu ruta
+                type: 'POST',
+                data: $(this).serialize(), // Asegúrate de que esto incluya los campos correctos
+                success: function(response) {
+                    $('#modalAgregar').modal('hide'); // Cierra el modal inmediatamente
+                    showMessage('success', 'Profesor agregado correctamente.');
+                    setTimeout(() => location.reload(), 3000); // Recarga la página después de 3 segundos
+                },
+                error: function(error) {
+                    showMessage('danger', 'Error al agregar el profesor.');
+                    console.error('Error al agregar el profesor:', error);
+                }
+            });
+        });
+    
+         // Editar profesor
+         $('#formEditarProfesor').on('submit', function(event) {
+            event.preventDefault();
+
+            const id = $('#editarId').val();
+            const nombre = $('#editarNombre').val();
+            const email = $('#editarEmail').val();
+            const especialidad = $('#editarEspecialidad').val();
+            const experiencia_years = $('#editarExperiencia').val();
+            const idgrado = $('#editarGrado').val(); // Array con los ID de los grados seleccionados
+            const idseccion = $('#editarSeccion').val(); // Array con los ID de las secciones seleccionadas
+            const fecha_ingreso = $('#editarFechaIngreso').val();
+
+            // Actualizar los datos del profesor
+            $.ajax({
+                url: `/profesores/${id}`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    nombre,
+                    email,
+                    especialidad,
+                    experiencia_years,
+                    fecha_ingreso,
+                    grados: idgrado, // Si necesitas enviar grados
+                    secciones: idseccion // Si necesitas enviar secciones
+                }),
+                success: function(response) {
+                    $('#modalEditar').modal('hide'); // Cierra el modal inmediatamente
+                    showMessage('success', 'Profesor actualizado correctamente.');
+                    setTimeout(() => location.reload(), 3000); // Recarga la página después de 3 segundos
+                },
+                error: function(error) {
+                    showMessage('danger', 'Error al actualizar el profesor.');
+                    console.error('Error al actualizar el profesor:', error);
+                }
+            });
+        });
+        });
+        //cargando
+        document.addEventListener("DOMContentLoaded", function () {
+            const loading = document.getElementById('loading');
+        
+            // Selecciona los enlaces del menú lateral
+            const moduleLinks = document.querySelectorAll('.nav-links a');
+        
+            moduleLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    // Mostrar el mensaje de "Cargando"
+                    loading.style.display = 'flex';
+        
+                    // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                    }, 8000); // Puedes ajustar el tiempo según lo que necesites
+                });
+            });
+        });        
     </script>
+    
 </body>
 </html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Calificaciones</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Módulo de Calificaciones</h2>
+
+    <div class="form-group">
+        <label for="grado">Grado</label>
+        <select class="form-control" id="grado" name="grado" required>
+            <option value="">Selecciona un grado</option>
+            <% grados.forEach(function(grado) { %>
+                <option value="<%= grado.id_grado %>"><%= grado.nombre_grado %></option>
+            <% }); %>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="seccion">Sección</label>
+        <select class="form-control" id="seccion" name="seccion" required>
+            <option value="">Selecciona una sección</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+        </select>
+    </div>
+
+
+    <button class="btn btn-primary" id="btnMostrarEstudiantes"> <i class="fas fa-users"></i> Mostrar Estudiantes</button>
+    <h3 class="mt-4">Estudiantes</h3>
+    <table class="table table-striped" id="estudiantesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Grado</th>
+                <th>Sección</th>
+                <th>Curso</th>
+                <th>Calificación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="estudiantesBody">
+            <!-- Los estudiantes se agregarán dinámicamente aquí -->
+        </tbody>
+    </table>
+
+<!-- Modal para Asignar Calificaciones -->
+<div class="modal fade" id="asignarNotasModal" tabindex="-1" aria-labelledby="asignarNotasModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/calificaciones/asignar" method="POST" id="formAsignarNotas">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="asignarNotasModalLabel">Asignar Calificaciones</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="id_alumno" name="id_alumno">
+                    <div class="form-group">
+                        <label for="id_curso">Curso</label>
+                        <select class="form-control" id="id_curso" name="id_curso" required>
+                            <option value="">Selecciona un curso</option>
+                            <% cursos.forEach(function(curso) { %>
+                                <option value="<%= curso.id_curso %>"><%= curso.nombre_curso %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bimestre">Bimestre</label>
+                        <select class="form-control" id="bimestre" name="bimestre" required>
+                            <option value="I">Bimestre I</option>
+                            <option value="II">Bimestre II</option>
+                            <option value="III">Bimestre III</option>
+                            <option value="IV">Bimestre IV</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="calificacion">Calificación</label>
+                        <input type="number" class="form-control" id="calificacion" name="calificacion" min="0" max="100" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar Calificación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal para Editar Calificaciones -->
+<div class="modal fade" id="editarNotasModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Calificación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarNotas">
+                    <input type="hidden" id="editar_id_alumno" name="id_alumno">
+                    <div class="form-group">
+                        <label for="editar_bimestre">Bimestre</label>
+                        <select class="form-control" id="editar_bimestre" name="bimestre" required>
+                            <option value="">Selecciona un bimestre</option>
+                            <option value="I">I</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_calificacion">Calificación</label>
+                        <input type="number" class="form-control" id="editar_calificacion" name="calificacion" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <button class="btn btn-success" id="btnDescargarNotas">Descargar Notas</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    let gradoSeleccionado = null;
+    let seccionSeleccionada = null;
+
+    // Manejo de eventos
+    function abrirModal(id_alumno, nombre, apellido) {
+        $('#id_alumno').val(id_alumno);
+        $('#asignarNotasModalLabel').text(`Asignar Calificación a ${nombre} ${apellido}`);
+        $('#asignarNotasModal').modal('show');
+    }
+
+    // Abrir el modal para editar calificación
+    function abrirModalEditar(id_alumno, id_curso, bimestre, calificacion) {
+        console.log("Valores recibidos para editar:", id_alumno, id_curso, bimestre, calificacion); // Depuración
+        $('#editar_id_alumno').val(id_alumno);
+        $('#editar_id_curso').val(id_curso); // Asegúrate de llenar esto
+        $('#editar_bimestre').val(bimestre);
+        $('#editar_calificacion').val(calificacion);
+        $('#editarNotasModal').modal('show');
+    }
+    
+    
+        // Al enviar el formulario de edición
+        $('#formEditarCalificacion').on('submit', function(e) {
+            e.preventDefault();
+        
+            const id_alumno = $('#id_alumno').val(); // Este valor debe estar presente
+            const bimestre = $('#bimestre').val(); // Asegúrate de que este campo esté presente
+            const calificacion = $('#calificacion').val(); // Asegúrate de que este campo esté presente
+        
+            console.log('Datos a enviar:', { id_alumno, bimestre, calificacion });
+        
+            $.ajax({
+                type: "POST",
+                url: "/calificaciones/editar",
+                data: { id_alumno, bimestre, calificacion },
+                success: function(response) {
+                    alert(response.message);
+                    // Cerrar modal y actualizar vista
+                },
+                error: function(xhr) {
+                    alert("Error al editar la calificación: " + xhr.responseJSON.message);
+                }
+            });
+        });
+
+    
+    
+    // Previene el comportamiento por defecto del formulario
+    $('form').on('submit', function(e) {
+        e.preventDefault(); // Previene que el formulario recargue la página
+        const formData = $(this).serialize(); // Serializa los datos del formulario
+
+        $.post('/calificaciones/asignar', formData, function(response) {
+            $('#asignarNotasModal').modal('hide');
+            $('#btnMostrarEstudiantes').trigger('click');
+        }).fail(function(err) {
+            console.error("Error al guardar calificación:", err);
+        });
+    });
+
+    $(document).ready(function() {
+        $('#btnMostrarEstudiantes').on('click', function() {
+            let grado = $('#grado').val();
+            let seccion = $('#seccion').val();
+    
+            if (!grado || !seccion) {
+                alert("Por favor, selecciona un grado y una sección.");
+                return;
+            }
+    
+            $.ajax({
+                url: '/calificaciones/alumnos',
+                method: 'GET',
+                data: { grado: grado, seccion: seccion },
+                success: function(alumnos) {
+                    $('#estudiantesBody').empty();
+    
+                    // Objeto para rastrear qué estudiantes ya tienen registro
+                    let alumnosProcesados = {};
+    
+                    alumnos.forEach(function(alumno) {
+                        let tieneCalificacion = alumno.calificacion !== null;
+                        let botones = '';
+    
+                        // Verificar si ya hemos procesado al estudiante antes
+                        if (!alumnosProcesados[alumno.id_alumno]) {
+                            // Es la primera vez que procesamos a este estudiante
+                            alumnosProcesados[alumno.id_alumno] = true;
+    
+                            // Si no tiene calificación en el primer registro, mostramos ambos botones
+                            if (!tieneCalificacion) {
+                                botones = `
+                                    <button class="btn btn-success" onclick="abrirModal(${alumno.id_alumno}, '${alumno.nombre}', '${alumno.apellido}')">
+                                        <i class="fas fa-plus"></i> Asignar
+                                    </button>
+                                    <button class="btn btn-info" onclick="abrirModalEditar(${alumno.id_alumno}, ${alumno.id_curso}, '${alumno.calificacion}')">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>`;
+                            } else {
+                                // Si tiene calificación en este primer curso, mostramos solo el botón de editar
+                                botones = `
+                                    <button class="btn btn-success" onclick="abrirModal(${alumno.id_alumno}, '${alumno.nombre}', '${alumno.apellido}')">
+                                        <i class="fas fa-plus"></i> Asignar
+                                    </button>
+                                    <button class="btn btn-info" onclick="abrirModalEditar(${alumno.id_alumno}, ${alumno.id_curso}, '${alumno.calificacion}')">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>`;
+                            }
+                        } else {
+                            // Ya hemos procesado a este estudiante, solo mostramos el botón de editar
+                            if (tieneCalificacion) {
+                                botones = `
+                                    <button class="btn btn-info" onclick="abrirModalEditar(${alumno.id_alumno}, ${alumno.id_curso}, '${alumno.calificacion}')">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>`;
+                            }
+                        }
+    
+                        // Insertamos la fila del estudiante en la tabla
+                        $('#estudiantesBody').append(`
+                            <tr>
+                                <td>${alumno.id_alumno}</td>
+                                <td>${alumno.nombre}</td>
+                                <td>${alumno.apellido}</td>
+                                <td>${alumno.nombre_grado}</td>
+                                <td>${alumno.seccion}</td>
+                                <td>${alumno.nombre_curso || 'Sin curso asignado'}</td>
+                                <td>${alumno.calificacion || 'Sin calificación'}</td>
+                                <td>${botones}</td>
+                            </tr>
+                        `);
+                    });
+    
+                    // Si no hay alumnos, mostrar mensaje
+                    if (alumnos.length === 0) {
+                        $('#estudiantesBody').append(`
+                            <tr>
+                                <td colspan="8" class="text-center">No hay alumnos disponibles.</td>
+                            </tr>
+                        `);
+                    }
+                },
+                error: function(err) {
+                    console.error("Error detallado:", err);
+                    alert("Error al cargar los alumnos. " + (err.responseJSON?.message || "Error desconocido."));
+                }
+            });
+        });
+    });
+</script>
+
+
+</body>
+</html>

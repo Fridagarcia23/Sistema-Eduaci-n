@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Administrador</title>
     <!-- Enlace a Google Fonts para la tipografía Margarine -->
-    <link href="https://fonts.googleapis.com/css2?family=Margarine:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
     <!-- Enlace a Font Awesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    
     <style>
         body {
             margin: 0;
@@ -77,8 +80,9 @@
             display: block;
         }
         .header {
-            background-color: #4b6584;
-            color: #fff;
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #fdfbfb; /* Blanco */
             padding: 10px;
             position: fixed;
             top: 0;
@@ -88,6 +92,7 @@
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
         }
         .header-logo img {
             height: 80px;
@@ -110,14 +115,14 @@
         }
         .profile-header .profile-info {
             margin-right: 30px;
-            color: #fff;
+            color: #070707;
         }
         .profile-header .profile-info .name {
             font-size: 1em;
         }
         .profile-header .profile-info .role {
             font-size: 0.8em;
-            color: #cfcfcf;
+            color: #050505;
         }
         .dropdown-menu {
             display: none;
@@ -189,15 +194,18 @@
             font-weight: 600;
         }
         .footer {
-            background-color: #4b6584;
-            color: #fff;
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #ffffff; /* Blanco */
             text-align: center;
             padding: 10px;
             position: fixed;
             bottom: 0;
             width: calc(100% - 250px);
             margin-left: 250px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave en la parte superior */
         }
+        
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
@@ -226,25 +234,77 @@
             cursor: pointer;
             z-index: 1001;
         }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+         /* Estilos para el banner de éxito */
+         .success-message {
+            display: none;
+            background-color: #4caf50;
+            color: white;
+            padding: 20px 40px; /* Tamaño más grande */
+            text-align: center;
+            position: fixed;
+            top: 50%; /* Centrar verticalmente */
+            left: 50%; /* Centrar horizontalmente */
+            transform: translate(-50%, -50%); /* Ajustar para centrar perfectamente */
+            border-radius: 10px;
+            z-index: 1000;
+            font-size: 20px; /* Texto más grande */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Agregar sombra */
+            width: 80%; /* Hacer el mensaje más ancho */
+            max-width: 600px; /* Limitar el ancho máximo */
+        }
+        .success-message i {
+            margin-right: 10px; /* Espaciado entre el ícono y el texto */
+            font-size: 24px; /* Tamaño del ícono */
+        }
     </style>
 </head>
 <body>
     <nav class="sidebar">
-        <ul class="nav-links">
-            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
-            <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
-            <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>            
-            <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
-            <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-            <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-            <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-            <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
-            <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
-            <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
-            <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-            <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
-        </ul>
+        <div class="nav-category">
+            <h3><i class="fas fa-cogs"></i> Administración</h3>
+            <ul class="nav-links">
+                <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+            <ul class="nav-links">
+                <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+            <ul class="nav-links">
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
+                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+            <ul class="nav-links">
+                <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
+            </ul>
+        </div>        
     </nav>
     <header class="header">
         <div class="header-logo">
@@ -252,25 +312,27 @@
         </div>
         <h1>CENTRO ESCOLAR CECEC</h1>
         <div class="profile-header">
-            <img src="<%= user.profilePicture %>" alt="Foto de Perfil" class="profile-picture">
+            <img id="profileImage" src="<%= user.profilePicture %>" alt="Foto de Perfil" class="profile-picture">
             <div class="profile-info">
                 <div class="name"><%= user.nombre_usuario %></div>
                 <div class="role"><%= user.rol %></div>
             </div>
             <!-- Menú desplegable dentro de profile-header -->
             <div class="dropdown-menu">
-                <a href="#"><i class="fas fa-user"></i> Perfil</a>
+                <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">
+                    <i class="fas fa-user-edit"></i> Editar Perfil
+                </a>               
                 <a href="#"><i class="fas fa-cogs"></i> Configuración</a>
                 <a href="#"><i class="fas fa-sign-out-alt"></i> Salir</a>
             </div>
         </div>
     </header>
-    
     <div class="dashboard-container">
+        <div class="success-message" id="successMessage"></div>
         <div class="modules-container">
             <div id="history-content" style="margin-top: 10px; text-align: center;">
-                <h2 style="font-size: 2em; font-weight: 600;">Nuestra Historia</h2>
-                <div style="max-width: 800px; margin: 0 auto; text-align: justify; font-size: 1.1em; line-height: 1.8;">
+                <h2 style="font-size: 2em; font-weight: 600; margin-top: 30px;">Nuestra Historia</h2>
+                <div style="max-width: 900px; margin: 0 auto; text-align: justify; font-size: 1.1em; line-height: 1.9;">
                     <p>
                         La Escuela de Cristo se estableció hace diez años con la intención de brindar a los niños y jóvenes de la comunidad de Villa Nueva, Guatemala, una educación completa y de alta calidad. La necesidad de una institución educativa que combinara la excelencia académica con un enfoque en el desarrollo integral de los estudiantes fue lo que llevó a la fundación de la escuela.
                     </p>
@@ -293,5 +355,100 @@
     <div class="footer">
         © 2024 ING. Frida Berlinda Garcia
     </div>
+    <!-- Modal -->
+<!-- Modal de Editar Perfil -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="editProfileForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">Editar Perfil</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Nombre:</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<%= user.nombre_usuario %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="image">Subir Foto de Perfil:</label>
+                        <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
+                    </div>
+                    <div id="successMessage" class="alert alert-success d-none" role="alert">
+                        Foto de perfil actualizada exitosamente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+       // Obtener los valores de EJS para el mensaje
+       const userName = "<%= user.nombre_usuario %>";
+       const userRole = "<%= user.rol %>";
+
+       function showSuccessMessage() {
+           const message = document.getElementById('successMessage');
+           message.innerHTML = `<i class="fas fa-check-circle"></i> ¡Ingreso exitoso! Bienvenido, ${userRole} ${userName}.`;
+           message.style.display = 'block';
+           setTimeout(() => {
+               message.style.display = 'none';
+           }, 3000); // Mostrar el mensaje durante 3 segundos
+       }
+
+       // Mostrar el mensaje cuando se carga la página
+       window.onload = showSuccessMessage;
+
+       //perfil
+       document.getElementById('editProfileForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevenir el comportamiento por defecto del formulario
+    
+        let formData = new FormData(this); // Crear un objeto FormData con los datos del formulario
+    
+        fetch('/uploadProfile', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar la imagen de perfil dentro del dashboard
+                let profileImageElement = document.getElementById('profileImage');
+                if (profileImageElement) {
+                    profileImageElement.src = data.imagePath;
+                }
+    
+                // Mostrar mensaje de éxito
+                let successMessage = document.getElementById('successMessage');
+                successMessage.classList.remove('d-none');
+                successMessage.textContent = data.message;
+    
+                // Cerrar el modal después de 2 segundos
+                setTimeout(() => {
+                    $('#editProfileModal').modal('hide');
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error al subir la imagen:', error);
+        });
+    });
+    
+    
+    
+    </script>
 </body>
 </html>

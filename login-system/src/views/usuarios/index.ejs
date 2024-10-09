@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Margarine:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
     <style>
 
 body {
@@ -93,7 +94,7 @@ body {
 }
 
 .btn-pdf {
-    background-color: #d9534f;
+    background-color: #f72821;
 }
 
 .btn i {
@@ -154,6 +155,14 @@ body {
 }
 
 /* Tabla */
+.table-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrar horizontalmente */
+    margin-top: 10px, 40px; /* Espacio superior */
+    margin-left: 270px;
+}
+
 .table {
     margin-top: 20px;
     border-collapse: collapse;
@@ -163,7 +172,7 @@ body {
 }
 
 .table th, .table td {
-    padding: 8px 8px;
+    padding: 7px;
     text-align: left;
 }
 
@@ -218,7 +227,7 @@ body {
 
 .btn-pdf:hover {
     background-color: #fff;
-    color: #dc3545;
+    color: #f72821;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
@@ -301,8 +310,9 @@ body {
 }
 
 .header {
-    background-color: #4b6584; /* Color más serio */
-    color: #fff;
+    background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    color: #030303;
     padding: 12px;
     position: fixed;
     top: 0;
@@ -358,28 +368,87 @@ body {
     float: right;
     margin-left: auto;
 }
+.nav-category {
+    margin-bottom: 10px; /* Espacio entre categorías */
+    margin-top: 10px;
+}
+
+.nav-category h3 {
+    font-size: 1em; /* Tamaño del texto del título */
+    color: #05f505; /* Color del título */
+    margin-bottom: 7px; /* Espacio debajo del título */
+}
+/* Fondo transparente que cubre toda la página */
+/* Fondo transparente que cubre toda la página */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Contenido del cargando */
+.loading-content {
+    text-align: center;
+    color: white;
+    font-size: 24px;
+}
+
+/* Ícono de carga */
+.loading-content i {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
 
     </style>
 </head>
 <body>
     <div class="dashboard-container">
+
         <!-- Menú lateral -->
         <nav class="sidebar">
-            <ul class="nav-links">
-                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
-                <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
-                <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
-                <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
-                <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
-                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
-                <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
-                <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
-            </ul>
+            <div class="nav-category">
+                <h3><i class="fas fa-cogs"></i> Administración</h3>
+                <ul class="nav-links">
+                    <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                    <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                    <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                    <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+                </ul>
+            </div>
+            
+            <div class="nav-category">
+                <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+                <ul class="nav-links">
+                    <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                    <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                    <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                </ul>
+            </div>
+            
+            <div class="nav-category">
+                <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+                <ul class="nav-links">
+                    <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
+                    <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                </ul>
+            </div>
+            
+            <div class="nav-category">
+                <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+                <ul class="nav-links">
+                    <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                    <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
+                </ul>
+            </div>        
         </nav>
     
         <!-- Cabecera -->
@@ -393,7 +462,7 @@ body {
     <div class="content">
     <div class="container mt-4">
         <h1>Usuarios</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal"><i class="fas fa-user-plus"></i> Crear Usuario</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal"><i class="fas fa-user-plus"></i> Agregar Usuario</button>
         <!-- Botones de descarga con estilos consistentes -->
         <button id="generateActiveExcel" class="btn btn-download btn-excel">
         <i class="fas fa-file-excel"></i> Excel Activo
@@ -455,6 +524,14 @@ body {
             </thead>
             <tbody id="userTableBody">
                 <!-- Los usuarios se cargarán aquí mediante JavaScript -->
+
+                <!-- Contenedor de carga -->
+<div id="loading" style="display: none;" class="loading-overlay">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando...</p>
+    </div>
+</div>
             </tbody>
         </table>
 
@@ -666,7 +743,7 @@ body {
             
             document.addEventListener('DOMContentLoaded', () => {
                 let currentPage = 1;
-                let recordsPerPage = 10;
+                let recordsPerPage = 5;
             
                 function loadUsers(page, records) {
                     fetch(`/api/usuarios?page=${page}&records=${records}`)
@@ -880,8 +957,8 @@ body {
                 loadUsers(currentPage);
             });
 
-            //reporte 
-            // Función para generar archivo Excel
+            //reportes
+         // Función para generar archivo Excel
 function generateExcel(users, status) {
     const filteredUsers = users.filter(user => user.estado === status);
 
@@ -924,9 +1001,7 @@ function generateExcel(users, status) {
 // Función para generar archivo PDF estilizado
 function generateStyledPdf(users, status) {
     const { jsPDF } = window.jspdf;
-
-    // Crear documento con orientación horizontal
-    const pdf = new jsPDF('landscape'); // 'landscape' para horizontal
+    const pdf = new jsPDF('landscape');
 
     const filteredUsers = users.filter(user => user.estado === status);
 
@@ -935,62 +1010,52 @@ function generateStyledPdf(users, status) {
         return;
     }
 
-    // Estilos para el título
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(24);
-    pdf.setTextColor(0, 102, 204); // Color azul personalizado
-    pdf.text(`Reporte de Usuarios ${status.toUpperCase()}`, 148, 20, null, null, 'center'); // Centrado en orientación landscape
+    // Agregar logo
+    const logo = new Image();
+    logo.src = 'img/home.jpg'; // Cambia esta línea a la ruta de tu logo
+    logo.onload = function() {
+        pdf.addImage(logo, 'PNG', 10, 10, 30, 30); // Ajustar tamaño y posición del logo
 
-    // Subtítulo o línea decorativa
-    pdf.setDrawColor(0, 102, 204);
-    pdf.setLineWidth(1.5);
-    pdf.line(20, 25, 270, 25); // Línea horizontal decorativa debajo del título
+        // Estilos para el título
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(24);
+        pdf.setTextColor(0, 0, 0); // Cambiar a color negro
+        pdf.text(`Reporte de Usuarios ${status.toUpperCase()}`, 148, 20, null, null, 'center');
 
-    // Estilos para las tablas
-    const headers = ['ID', 'Nombre', 'Correo', 'Teléfono', 'Dirección', 'Fecha de Nacimiento', 'Género', 'Rol', 'Estado'];
+        // Quitar línea decorativa
+        // pdf.setDrawColor(0, 102, 204);
+        // pdf.setLineWidth(1.5);
+        // pdf.line(20, 25, 270, 25); // Línea horizontal decorativa debajo del título
 
-    pdf.setFontSize(12);
-    pdf.setTextColor(0, 0, 0); // Texto negro
-    let yPosition = 40;
+        // Configuración de la tabla
+        pdf.autoTable({
+            head: [['ID', 'Nombre', 'Correo', 'Teléfono', 'Dirección', 'Fecha de Nacimiento', 'Género', 'Rol', 'Estado']],
+            body: filteredUsers.map(user => [
+                user.id_usuario,
+                user.nombre_usuario,
+                user.email,
+                user.telefono,
+                user.direccion,
+                user.fecha_nacimiento.split('T')[0],
+                user.genero,
+                user.id_rol === 1 ? 'Administrador' : 'Profesor',
+                user.estado
+            ]),
+            startY: 40, // Ajustar la posición inicial de la tabla
+            theme: 'striped',
+            styles: { fontSize: 12 },
+            headStyles: { fillColor: [144, 238, 144] },
+            margin: { top: 10 }
+        });
 
-    // Añadir encabezados con fondo
-    pdf.setFillColor(230, 230, 230); // Fondo gris claro
-    pdf.rect(15, yPosition - 10, 270, 10, 'F'); // Fondo de la fila del encabezado (más ancho por landscape)
-    pdf.text(headers.join(' | '), 20, yPosition);
+        // Añadir pie de página
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Generado el ${new Date().toLocaleString('es-GT')}`, 148, pdf.autoTable.previous.finalY + 10, null, null, 'center');
 
-    // Mover la posición vertical hacia abajo para las filas de datos
-    yPosition += 10;
-
-    // Añadir bordes y filas de datos
-    filteredUsers.forEach(user => {
-        const row = [
-            user.id_usuario,
-            user.nombre_usuario,
-            user.email,
-            user.telefono,
-            user.direccion,
-            user.fecha_nacimiento.split('T')[0],
-            user.genero,
-            user.id_rol === 1 ? 'Administrador' : 'Profesor',
-            user.estado
-        ];
-
-        // Dibujar borde alrededor de cada fila
-        pdf.setDrawColor(150); // Color de los bordes (gris oscuro)
-        pdf.rect(15, yPosition - 5, 270, 10); // Borde para landscape
-
-        // Añadir texto
-        pdf.text(row.join(' | '), 20, yPosition);
-        yPosition += 10;
-    });
-
-    // Añadir pie de página
-    pdf.setFontSize(10);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Generado el ${new Date().toLocaleDateString()}`, 148, 200, null, null, 'center'); // Pie centrado en landscape
-
-    // Descargar el archivo PDF
-    pdf.save(`reporte_usuarios_${status}.pdf`);
+        // Descargar el archivo PDF
+        pdf.save(`reporte_usuarios_${status}.pdf`);
+    };
 }
 
 // Función para obtener usuarios y generar el archivo correspondiente
@@ -1024,6 +1089,8 @@ document.getElementById('generateActivePdf').addEventListener('click', () => {
 document.getElementById('generateInactivePdf').addEventListener('click', () => {
     fetchUsersAndGenerateReport('inactivo', 'pdf');
 });
+
+
 
 //filtro
 document.addEventListener('DOMContentLoaded', function() {
@@ -1110,6 +1177,26 @@ document.querySelectorAll('.nav-links li > a').forEach(menuItem => {
         }
     });
 });
+//cargando
+document.addEventListener("DOMContentLoaded", function () {
+    const loading = document.getElementById('loading');
+
+    // Selecciona los enlaces del menú lateral
+    const moduleLinks = document.querySelectorAll('.nav-links a');
+
+    moduleLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            // Mostrar el mensaje de "Cargando"
+            loading.style.display = 'flex';
+
+            // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 3000); // Puedes ajustar el tiempo según lo que necesites
+        });
+    });
+});
+
     </script>
 </body>
 </html>

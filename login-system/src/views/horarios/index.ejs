@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Horarios</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Incluir Bootstrap Multiselect CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-multiselect@0.9.15/css/bootstrap-multiselect.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+  <style>
+    .pagination {
+        margin-top: 3px;
+        justify-content: center; /* Centrar la paginación */
+    }
+    /* Estilos de los mensajes emergentes */
+    #messageBox {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        width: 300px;
+    }
+    body {
+        margin: 0;
+        font-family: 'Margarine', sans-serif;
+        display: flex;
+        min-height: 100vh;
+        background-color: #f7f7f7;
+    }
+    .button-group {
+        display: flex;
+        gap: 5px; /* Reduce el espacio entre los botones */
+    }
+    
+    .button-group .btn {
+        margin: 0; /* Asegúrate de que no haya márgenes adicionales */
+        padding: 10px 10px; /* Ajusta el padding para que los botones sean más pequeños si es necesario */
+    }
+    
+    @media print {
+        .no-print {
+            display: none;
+        }
+    }
+    /* Botones */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        margin: 5px;
+        font-size: 16px;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    /* contenedores de filtro */
+    .filters {
+        display: flex;
+        gap: 10px;
+        margin-top: -3px;
+        margin-left: 280px;
+    }
+    
+    .filters input[type="text"],
+    .filters select {
+        max-width: 200px;
+        padding: 8px 12px; /* Espaciado interno */
+        font-weight: normal; /* Normalizar el peso del texto */
+        color: #333; /* Texto negro oscuro */
+        background-color: #fff; /* Fondo blanco */
+        border: 1px solid #ccc; /* Borde gris */
+        border-radius: 4px; /* Bordes redondeados */
+    }
+    
+    .filters input[type="text"]::placeholder {
+        color: #666; /* Color del placeholder */
+    }
+    
+    .filters select {
+        padding-left: 10px; /* Espacio a la izquierda para el select */
+    }
+    
+    /* Tabla */
+    .table {
+        width: 80%; /* Ajusta según sea necesario */
+        max-width: 800px;
+        margin: 20px auto;
+        border-collapse: collapse; /* Mantiene las celdas juntas */
+        margin-left: 280px;
+        table-layout: auto; /* Permite que las columnas se ajusten automáticamente */
+    }
+    
+    .table th, .table td {
+        padding: 11px;
+        text-align: left;
+        border: none; /* Elimina bordes en las celdas */
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    
+    .table tbody tr:nth-child(even) {
+        background-color: #f2f2f2; /* Alterna el color de fondo */
+    }
+    
+    .table thead th {
+        background-color: #359b16;
+        color: white; /* Color del texto en el encabezado */
+    }
+    
+    /* Para asegurar que la columna de grados se ajuste correctamente */
+    .table td:nth-child(6) { /* Columna de Grados */
+        white-space: normal; /* Permite que el texto se divida en líneas */
+    }
+    
+    
+    /* Estilo para el botón de Crear Usuario */
+    /* Botón */
+    /* Botón */
+    .btn-custom {
+        font-size: 16px;
+        padding: 8px 15px;
+        margin-left: 0; /* Asegura que el botón esté alineado al título */
+        margin-bottom: 10px; /* Reduce el espacio entre el botón y el filtro */
+        display: inline-block; /* Para que respete el ancho de su contenido */
+    }
+    
+    /* Modales */
+    .modal-header {
+    background-color: #007bff;
+    color: white;
+    }
+    
+    .modal-header .btn-close {
+    color: white;
+    }
+    
+    /* Botones dentro de los modales */
+    .modal .btn {
+    margin-top: 10px;
+    }
+    
+    /* Contenido del dashboard */
+    .dashboard-container {
+    display: flex;
+    flex-direction: column;
+    }
+    
+    .sidebar {
+    width: 250px;
+    background-color: #2a2d34;
+    color: #fff;
+    position: fixed;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    transition: left 0.3s ease;
+    overflow: auto;
+    }
+    
+    .sidebar.active {
+    left: 0;
+    }
+    
+    .nav-links li {
+    position: relative;
+    }
+    
+    .nav-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .nav-links a {
+        display: flex;
+        align-items: center;
+        padding: 13.5px;
+        color: #fff;
+        text-decoration: none;
+        position: relative;
+    }
+    
+    /* Animación de movimiento para cada opción del menú al pasar el mouse */
+    .nav-links a:hover {
+        background-color: #3e4149;
+        transform: translateY(-5px); /* Mueve la opción hacia arriba */
+    }
+    
+    /* Animación de retorno a la posición original */
+    .nav-links a {
+        transition: transform 0.3s ease;
+    }
+    
+    .nav-links a:hover {
+        background-color: #3e4149; /* Cambia el color de fondo al pasar el mouse */
+    }
+    
+    .header {
+        background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        color: #030303;
+        padding: 12px;
+        position: fixed;
+        top: 0;
+        left: 250px;
+        width: calc(100% - 250px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Centra el contenido */
+        z-index: 1000;
+    }
+    
+    .header-logo img {
+        height: 80px;
+        margin-right: 15px;
+    }
+    
+    .header h1 {
+        font-weight: 800;
+        font-size: 1.8em;
+        text-align: center; /* Asegura que el texto esté centrado dentro de su contenedor */
+        margin: 0 auto; /* Centra el título dentro de su contenedor */
+    }
+    
+    .content {
+        margin-left: 250px;
+        margin-top: 60px;
+        padding: 20px;
+    }
+    
+    .button-container {
+        display: flex;
+        align-items: center; /* Alinear botones verticalmente */
+        gap: 10px; /* Espacio entre botones */
+    }
+    
+    .button-container {
+        display: flex;
+        justify-content: flex-end; /* Alinea los botones a la derecha */
+        margin-top: 20px; /* Espacio entre el título y los botones */
+        margin-right: 290px; /* Espacio a la derecha para mover los botones */
+    }
+    
+    .button-container .btn {
+        margin-left: 10px; /* Espacio entre los botones */
+    }
+    /* Título */
+    /* Título */
+    .module-title {
+        font-weight: 800;
+        font-size: 1.8em;
+        margin-bottom: 5px; /* Reduce el espacio entre el título y el botón */
+        margin-left: 0; /* Asegura que el título no tenga desplazamiento */
+    }
+
+    .nav-category {
+        margin-bottom: 10px; /* Espacio entre categorías */
+        margin-top: 10px;
+    }
+    
+    .nav-category h3 {
+        font-size: 1em; /* Tamaño del texto del título */
+        color: #05f505; /* Color del título */
+        margin-bottom: 7px; /* Espacio debajo del título */
+    }
+    /* Fondo transparente que cubre toda la página */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    }
+
+    /* Contenido del cargando */
+    .loading-content {
+        text-align: center;
+        color: white;
+        font-size: 24px;
+    }
+
+    /* Ícono de carga */
+    .loading-content i {
+        font-size: 50px;
+        margin-bottom: 10px;
+    }
+
+    /* Nuevo contenedor para agrupar el título y el botón */
+    .header-section {
+        display: flex;
+        flex-direction: column; /* Los elementos se alinearán en columna (uno debajo del otro) */
+        align-items: flex-start; /* Alinea los elementos a la izquierda */
+        margin-left: 280px; /* Asegura que estén alineados con el resto del contenido */
+        margin-right: 290px; /* Espacio a la derecha */
+        margin-top: 100px; /* Espacio desde arriba */
+        padding: 10px 0; /* Espaciado interno */
+    }
+        </style>
+        <div id="loading" style="display: none;" class="loading-overlay">
+            <div class="loading-content">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Cargando...</p>
+            </div>
+        </div>
+        <div class="dashboard-container">
+            
+            <!-- Cabecera -->
+            <header class="header">
+                <div class="header-logo">
+                    <img src="/img/home.jpg" alt="Logo">
+                </div>
+                <h1>CENTRO ESCOLAR CECEC</h1>
+            </header>
+            <div class="dashboard-container">
+                <!-- Menú lateral -->
+                <nav class="sidebar">
+                    <div class="nav-category">
+                        <h3><i class="fas fa-cogs"></i> Administración</h3>
+                        <ul class="nav-links">
+                            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                            <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                            <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                            <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="nav-category">
+                        <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+                        <ul class="nav-links">
+                            <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                            <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                            <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                            <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="nav-category">
+                        <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+                        <ul class="nav-links">
+                            <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
+                            <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="nav-category">
+                        <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+                        <ul class="nav-links">
+                            <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                            <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
+                        </ul>
+                    </div>        
+                </nav>
+</head>
+<body>
+
+<div class="container">
+  <h1 class="mt-4">Gestión de Horarios</h1>
+  <!-- Botón para Agregar Horario -->
+  <button class="btn btn-success" data-toggle="modal" data-target="#agregarModal">Agregar Horario</button>
+
+  <!-- Tabla de Horarios -->
+  <!-- Tabla de Horarios -->
+<table class="table table-bordered mt-4">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Curso</th>
+            <th>Día de la Semana</th>
+            <th>Hora de Inicio</th>
+            <th>Hora de Fin</th>
+            <th>Profesor</th>
+            <th>Grado</th>
+            <th>Sección</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% horarios.forEach(horario => { %>
+        <tr>
+            <td><%= horario.id_horario %></td>
+            <td><%= horario.nombre_curso %></td>
+            <td><%= horario.dia_semana %></td>
+            <td><%= horario.hora_inicio %></td>
+            <td><%= horario.hora_fin %></td>
+            <td><%= horario.nombre_profesor ? horario.nombre_profesor : 'Sin profesor asignado' %></td>
+            <td><%= horario.nombre_grado ? horario.nombre_grado : 'Sin grado asignado' %></td>
+            <td><%= horario.nombre_seccion ? horario.nombre_seccion : 'Sin sección asignada' %></td>
+            <td>
+                <button class="btn btn-primary" data-toggle="modal" data-target="#editarModal" 
+        data-id="<%= horario.id_horario %>"
+        data-id_curso="<%= horario.id_curso %>"
+        data-dia_semana="<%= horario.dia_semana %>"
+        data-hora_inicio="<%= horario.hora_inicio %>"
+        data-hora_fin="<%= horario.hora_fin %>"
+        data-id_profesor="<%= horario.id_profesor %>"
+        data-grados="<%= JSON.stringify(horario.grados) %>"
+        data-secciones="<%= JSON.stringify(horario.secciones) %>"><i class="fas fa-edit"></i></button>
+<button class="btn btn-danger" data-toggle="modal" data-target="#eliminarModal" 
+data-id="<%= horario.id_horario %>"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+  <!-- Botón para Agregar Horario -->
+  <button class="btn btn-success" data-toggle="modal" data-target="#agregarModal">Agregar Horario</button>
+
+<!-- Modal para Agregar Horario -->
+<div class="modal fade" id="agregarModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/horarios/agregar" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Horario</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Campo para seleccionar el curso -->
+                    <div class="form-group">
+                        <label for="id_curso">Curso:</label>
+                        <select class="form-control" name="id_curso" id="id_curso" required>
+                            <% cursos.forEach(curso => { %>
+                                <option value="<%= curso.id_curso %>"><%= curso.nombre_curso %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Campo para seleccionar el profesor -->
+                    <div class="form-group">
+                        <label for="id_profesor">Profesor:</label>
+                        <select class="form-control" name="id_profesor" id="id_profesor" required>
+                            <% profesores.forEach(profesor => { %>
+                                <option value="<%= profesor.id_profesor %>"><%= profesor.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Campo para seleccionar el día de la semana -->
+                    <div class="form-group">
+                        <label for="dia_semana">Día de la Semana:</label>
+                        <select class="form-control" name="dia_semana" id="dia_semana" required>
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                    </div>
+
+                    <!-- Modal de Agregar - Grados -->
+<!-- Modal de Agregar - Grados -->
+<div class="form-group">
+    <label>Grados:</label>
+    <div class="form-control" id="gradosDropdown" style="cursor: pointer;">
+        Seleccionar Grados
+    </div>
+    <div class="checkbox-group" style="display: none;" id="gradosCheckboxes">
+        <% grados.forEach(grado => { %>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="grados[]" id="grado_<%= grado.id_grado %>" value="<%= grado.id_grado %>" onclick="updateSelectedGrados('gradosDropdown', 'grados[]')">
+                <label class="form-check-label" for="grado_<%= grado.id_grado %>">
+                    <%= grado.nombre_grado %>
+                </label>
+            </div>
+        <% }); %>
+    </div>
+</div>
+
+<!-- Modal de Agregar - Secciones (A, B, C, D) -->
+<div class="form-group">
+    <label>Secciones:</label>
+    <div class="form-control" id="seccionesDropdown" style="cursor: pointer;">
+        Seleccionar Secciones
+    </div>
+    <div class="checkbox-group" style="display: none;" id="seccionesCheckboxes">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="secciones[]" id="seccion_153" value="153" onclick="updateSelectedSecciones('seccionesDropdown', 'secciones[]')">
+            <label class="form-check-label" for="seccion_153">
+                A
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="secciones[]" id="seccion_154" value="154" onclick="updateSelectedSecciones('seccionesDropdown', 'secciones[]')">
+            <label class="form-check-label" for="seccion_154">
+                B
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="secciones[]" id="seccion_155" value="155" onclick="updateSelectedSecciones('seccionesDropdown', 'secciones[]')">
+            <label class="form-check-label" for="seccion_155">
+                C
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="secciones[]" id="seccion_233" value="233" onclick="updateSelectedSecciones('seccionesDropdown', 'secciones[]')">
+            <label class="form-check-label" for="seccion_233">
+                D
+            </label>
+        </div>
+    </div>
+</div>
+
+
+                    <!-- Campo para hora de inicio -->
+                    <div class="form-group">
+                        <label for="hora_inicio">Hora de Inicio:</label>
+                        <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" required>
+                    </div>
+
+                    <!-- Campo para hora de fin -->
+                    <div class="form-group">
+                        <label for="hora_fin">Hora de Fin:</label>
+                        <input type="time" class="form-control" name="hora_fin" id="hora_fin" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal de Editar -->
+<!-- Modal de Editar -->
+<div class="modal fade" id="editarModal" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarModalLabel">Editar Horario</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarHorario" action="/horarios/editar" method="POST">
+                    <input type="hidden" name="id_horario" id="edit-id-horario">
+
+                    <div class="form-group">
+                        <label for="edit-id-curso">Curso</label>
+                        <select name="id_curso" id="edit-id-curso" class="form-control">
+                            <option value="">Seleccionar Curso</option>
+                            <% cursos.forEach(curso => { %>
+                                <option value="<%= curso.id_curso %>"><%= curso.nombre_curso %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-dia-semana">Día de la Semana</label>
+                        <select class="form-control" name="dia_semana" id="edit-dia-semana" required>
+                            <option value="">Seleccionar Día</option> <!-- Opción por defecto -->
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-hora-inicio">Hora de Inicio</label>
+                        <input type="time" class="form-control" name="hora_inicio" id="edit-hora-inicio" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-hora-fin">Hora de Fin</label>
+                        <input type="time" class="form-control" name="hora_fin" id="edit-hora-fin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-id-profesor">Profesor</label>
+                        <select name="id_profesor" id="edit-id-profesor" class="form-control">
+                            <option value="">Seleccionar Profesor</option>
+                            <% profesores.forEach(profesor => { %>
+                                <option value="<%= profesor.id_profesor %>"><%= profesor.nombre %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <!-- Campo de Grados en el Modal de Editar -->
+<div class="form-group">
+    <label>Grados:</label>
+    <div class="form-control" id="editGradosDropdown" style="cursor: pointer;">
+        Seleccionar Grados
+    </div>
+    <div class="checkbox-group" style="display: none;" id="editGradosCheckboxes">
+        <% grados.forEach(grado => { %>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="edit_grados[]" id="edit_grado_<%= grado.id_grado %>" value="<%= grado.id_grado %>" onclick="updateSelectedGrados('editGradosDropdown', 'edit_grados[]')">
+                <label class="form-check-label" for="edit_grado_<%= grado.id_grado %>">
+                    <%= grado.nombre_grado %>
+                </label>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<!-- Campo de Secciones en el Modal de Editar -->
+<!-- Campo de Secciones en el Modal de Editar -->
+<div class="form-group">
+    <label>Secciones:</label>
+    <div class="form-control" id="editSeccionesDropdown" style="cursor: pointer;">
+        Seleccionar Secciones
+    </div>
+    <div class="checkbox-group" style="display: none;" id="editSeccionesCheckboxes">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="edit_secciones[]" id="edit_seccion_153" value="153" onclick="updateSelectedSecciones('editSeccionesDropdown', 'edit_secciones[]')">
+            <label class="form-check-label" for="edit_seccion_153">
+                A
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="edit_secciones[]" id="edit_seccion_154" value="154" onclick="updateSelectedSecciones('editSeccionesDropdown', 'edit_secciones[]')">
+            <label class="form-check-label" for="edit_seccion_154">
+                B
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="edit_secciones[]" id="edit_seccion_155" value="155" onclick="updateSelectedSecciones('editSeccionesDropdown', 'edit_secciones[]')">
+            <label class="form-check-label" for="edit_seccion_155">
+                C
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="edit_secciones[]" id="edit_seccion_233" value="233" onclick="updateSelectedSecciones('editSeccionesDropdown', 'edit_secciones[]')">
+            <label class="form-check-label" for="edit_seccion_233">
+                D
+            </label>
+        </div>
+    </div>
+</div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" role="dialog" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          ¿Estás seguro de que deseas eliminar este horario?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="confirmarEliminar">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+  // Mostrar/Ocultar grados
+document.getElementById('editGradosDropdown').addEventListener('click', function() {
+    const checkboxes = document.getElementById('editGradosCheckboxes');
+    checkboxes.style.display = checkboxes.style.display === 'none' || checkboxes.style.display === '' ? 'block' : 'none';
+});
+
+// Mostrar/Ocultar secciones
+document.getElementById('editSeccionesDropdown').addEventListener('click', function() {
+    const checkboxes = document.getElementById('editSeccionesCheckboxes');
+    checkboxes.style.display = checkboxes.style.display === 'none' || checkboxes.style.display === '' ? 'block' : 'none';
+});
+
+// Actualizar la selección de grados en el modal de editar
+function updateSelectedGrados(dropdownId, checkboxName) {
+    const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]:checked`);
+    const selectedGrados = Array.from(checkboxes).map(cb => cb.nextElementSibling.innerText);
+    document.getElementById(dropdownId).innerText = selectedGrados.length > 0 ? selectedGrados.join(', ') : 'Seleccionar Grados';
+}
+
+// Actualizar la selección de secciones en el modal de editar
+function updateSelectedSecciones(dropdownId, checkboxName) {
+    const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]:checked`);
+    const selectedSecciones = Array.from(checkboxes).map(cb => cb.nextElementSibling.innerText);
+    document.getElementById(dropdownId).innerText = selectedSecciones.length > 0 ? selectedSecciones.join(', ') : 'Seleccionar Secciones';
+}
+
+// Mostrar/Ocultar grados (Agregar)
+document.getElementById('gradosDropdown').addEventListener('click', function() {
+    const checkboxes = document.getElementById('gradosCheckboxes');
+    checkboxes.style.display = checkboxes.style.display === 'none' || checkboxes.style.display === '' ? 'block' : 'none';
+});
+
+// Mostrar/Ocultar secciones (Agregar)
+document.getElementById('seccionesDropdown').addEventListener('click', function() {
+    const checkboxes = document.getElementById('seccionesCheckboxes');
+    checkboxes.style.display = checkboxes.style.display === 'none' || checkboxes.style.display === '' ? 'block' : 'none';
+});
+
+// Actualizar la selección de grados (Agregar)
+function updateSelectedGrados(dropdownId, checkboxName) {
+    const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]:checked`);
+    const selectedGrados = Array.from(checkboxes).map(cb => cb.nextElementSibling.innerText);
+    document.getElementById(dropdownId).innerText = selectedGrados.length > 0 ? selectedGrados.join(', ') : 'Seleccionar Grados';
+}
+
+// Actualizar la selección de secciones (Agregar)
+function updateSelectedSecciones(dropdownId, checkboxName) {
+    const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]:checked`);
+    const selectedSecciones = Array.from(checkboxes).map(cb => cb.nextElementSibling.innerText);
+    document.getElementById(dropdownId).innerText = selectedSecciones.length > 0 ? selectedSecciones.join(', ') : 'Seleccionar Secciones';
+}
+
+
+$('#editarModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget); // Botón que activó el modal
+    
+    // Obtener datos del botón
+    var idHorario = button.data('id');
+    var idCurso = button.data('id_curso');
+    var diaSemana = button.data('dia_semana');
+    var horaInicio = button.data('hora_inicio');
+    var horaFin = button.data('hora_fin');
+    var idProfesor = button.data('id_profesor');
+    var gradosSeleccionados = button.data('grados') || []; // Array vacío si no hay datos
+    var seccionesSeleccionadas = button.data('secciones') || []; // Array vacío si no hay datos
+
+    // Mostrar los datos para depuración
+    console.log(gradosSeleccionados, seccionesSeleccionadas);
+
+    // Actualizar los campos del modal
+    var modal = $(this);
+    modal.find('#edit-id-horario').val(idHorario);
+    modal.find('#edit-id-curso').val(idCurso);
+    modal.find('#edit-dia-semana').val(diaSemana);
+    modal.find('#edit-hora-inicio').val(horaInicio);
+    modal.find('#edit-hora-fin').val(horaFin);
+    modal.find('#edit-id-profesor').val(idProfesor);
+
+    // Limpiar selección de grados y secciones
+    modal.find('input[type="checkbox"]').prop('checked', false);
+
+    // Seleccionar los grados
+    gradosSeleccionados.forEach(gradoId => {
+        modal.find('#edit-grado-' + gradoId).prop('checked', true);
+    });
+
+    // Seleccionar las secciones
+    seccionesSeleccionadas.forEach(seccionId => {
+        modal.find('#edit-seccion-' + seccionId).prop('checked', true);
+    });
+});
+$('#eliminarModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget); // Botón que activó el modal
+    var idHorario = button.data('id'); // Extraer la información del atributo data-id
+    
+    // Almacenar el id_horario en un atributo del botón de confirmación
+    var modal = $(this);
+    modal.find('#confirmarEliminar').data('id', idHorario);
+});
+
+$('#confirmarEliminar').on('click', function () {
+    var idHorario = $(this).data('id'); // Obtener el id_horario almacenado
+    // Redirigir a la ruta de eliminación (o realizar una solicitud AJAX)
+    window.location.href = '/horarios/eliminar/' + idHorario;
+});
+
+</script>
+</body>
+</html>
