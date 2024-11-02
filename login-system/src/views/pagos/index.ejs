@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Pagos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Margarine', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        @media print {
+            body {
+                font-family: 'Margarine', cursive;
+            }
+        }
+        #messageBox {
+    position: absolute; /* O fixed, dependiendo de cómo quieras que se mueva */
+    top: 10px; /* Espacio desde la parte superior */
+    right: 10px; /* Espacio desde la parte derecha */
+    z-index: 999; /* Asegúrate de que esté sobre otros elementos */
+    display: none; /* Oculto por defecto */
+    padding: 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+}
+        .button-group {
+            display: flex;
+            gap: 5px; /* Reduce el espacio entre los botones */
+        }
+        
+        .button-group .btn {
+            margin: 0; /* Asegúrate de que no haya márgenes adicionales */
+            padding: 10px 10px; /* Ajusta el padding para que los botones sean más pequeños si es necesario */
+        }
+        
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px;
+            font-size: 16px;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* contenedores de filtro */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            margin-left: 270px;
+        }
+        
+        .filters input[type="text"],
+        .filters select {
+            max-width: 200px;
+            padding: 8px 12px; /* Espaciado interno */
+            font-weight: normal; /* Normalizar el peso del texto */
+            color: #333; /* Texto negro oscuro */
+            background-color: #fff; /* Fondo blanco */
+            border: 1px solid #ccc; /* Borde gris */
+            border-radius: 4px; /* Bordes redondeados */
+        }
+        
+        .filters input[type="text"]::placeholder {
+            color: #666; /* Color del placeholder */
+        }
+        
+        .filters select {
+            padding-left: 10px; /* Espacio a la izquierda para el select */
+        }
+
+        /* Selección de registros por página */
+        .records-per-page-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .records-per-page-label {
+            font-weight: bold;
+        }
+        
+        .records-per-page-select {
+            max-width: 150px;
+        }
+        
+        /* Tabla */
+        /* Asegúrate de que tu tabla esté centrada */
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centrar horizontalmente */
+            margin-top: 10px, 40px; /* Espacio superior */
+            margin-left: 270px;
+        }
+        
+        .table {
+            width: 400%; /* Ocupa todo el ancho disponible */
+            max-width: 1000px; /* Cambia según sea necesario */
+            margin: 20px auto; /* Centrar y agregar espacio superior/inferior */
+        }
+        
+        .table th, .table td {
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .table thead th {
+            background-color: #359b16;
+            color: white;
+        }
+        
+        /* Estilo para el botón de Crear Usuario */
+        .btn-primary {
+            border-radius: 0.25rem;
+            background-color: #007bff;
+            border-color: #007bff;
+            color: #fff;
+            font-weight: bold;
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary i {
+            margin-right: 5px;
+        }
+        
+        /* Estilo para los botones de descarga */
+        .btn-download {
+            border-radius: 0.25rem;
+            font-weight: bold;
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            font-family: 'Lato', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .btn-pdf:hover {
+            background-color: #fff;
+            color: #dc3545;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-download i {
+            margin-right: 5px;
+        }
+        
+        /* Modales */
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .modal-header .btn-close {
+            color: white;
+        }
+        
+        /* Botones dentro de los modales */
+        .modal .btn {
+            margin-top: 10px;
+        }
+        
+        /* Contenido del dashboard */
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            width: 210px;
+            background-color: #2a2d34;
+            color: #fff;
+            position: fixed;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            overflow: auto;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 13.5px;
+            color: #fff;
+            text-decoration: none;
+            position: relative;
+        }
+        
+        /* Animación de movimiento para cada opción del menú al pasar el mouse */
+        .nav-links a:hover {
+            background-color: #3e4149;
+            transform: translateY(-5px); /* Mueve la opción hacia arriba */
+        }
+        
+        /* Animación de retorno a la posición original */
+        .nav-links a {
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-links a i {
+            margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+            font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+            width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+            text-align: center; /* Centra el ícono dentro de ese espacio */
+        }
+        
+        .header {
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #070707;
+            padding: 12px;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            width: calc(100% - 250px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Centra el contenido */
+            z-index: 1000;
+        }
+        
+        .header-logo img {
+            height: 80px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            font-weight: 800;
+            font-size: 1.8em;
+            text-align: center; /* Asegura que el texto esté centrado dentro de su contenedor */
+            margin: 0 auto; /* Centra el título dentro de su contenedor */
+        }
+        
+        .content {
+            margin-left: 250px;
+            margin-top: 60px;
+            padding: 20px;
+        }
+        
+        .button-container {
+            display: flex;
+            align-items: center; /* Alinear botones verticalmente */
+            gap: 10px; /* Espacio entre botones */
+        }
+        
+        .export-button {
+            background-color: #f72821; /* Color de fondo rojo */
+            color: white; /* Color de texto blanco */
+            border: none; /* Sin borde */
+            transition: all 0.3s; /* Transición suave para efectos */
+        }
+        
+        .export-button:hover {
+            background-color: white; /* Fondo blanco al pasar el mouse */
+            color: #f72821; /* Texto rojo al pasar el mouse */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra gris en la parte inferior */
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-end; /* Alinea los botones a la derecha */
+            margin-top: 20px; /* Espacio entre el título y los botones */
+            margin-right: 290px; /* Espacio a la derecha para mover los botones */
+        }
+        
+        .button-container .btn {
+            margin-left: 10px; /* Espacio entre los botones */
+        }
+        .module-title {
+            margin-top: 70px; /* Aumenta el espacio debajo del título */
+            margin-left: 270px; /* Mueve el título hacia la derecha */
+            position: relative; 
+            z-index: 1; 
+        }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+
+        /* Fondo transparente que cubre toda la página */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+        }
+
+        /* Contenido del cargando */
+        .loading-content {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Ícono de carga */
+        .loading-content i {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        /* Estilos de los mensajes emergentes */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            width: 300px;
+        }
+        </style>
+</head>
+<body>
+
+    <!-- Mensaje de Cargando con iFrame GIF -->
+    <div id="loading" style="display: none;" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Menú lateral -->
+   <nav class="sidebar">
+       <div class="nav-category">
+           <h3><i class="fas fa-cogs"></i> Administración</h3>
+           <ul class="nav-links">
+               <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+               <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+               <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+               <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+               <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+           </ul>
+       </div>
+       
+       <div class="nav-category">
+           <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+           <ul class="nav-links">
+               <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+               <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+               <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+               <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+           </ul>
+       </div>
+       
+       <div class="nav-category">
+           <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+           <ul class="nav-links">
+               <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
+           </ul>
+       </div>
+       
+       <div class="nav-category">
+           <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+           <ul class="nav-links">
+               <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+           </ul>
+       </div>        
+   </nav>
+    
+    <div class="dashboard-container">
+        
+        <body>
+            <div class="container mt-5">
+                <div class="text-left" style="margin-left: 22%;">
+                    <h2>Control de Recibos</h2>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearRecibo">Crear Nuevo Recibo</button>
+                </div>
+        
+                <table class="table" style="margin-left: 22%;"> <!-- Añadido el margen izquierdo aquí -->
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Número de Recibo</th>
+                            <th>Monto</th>
+                            <th>Fecha de Emisión</th>
+                            <th>Fecha de Pago</th>
+                            <th>Descripción</th>
+                            <th>Alumno</th>
+                            <th>Estado</th>
+                            <th>Mes</th> 
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recibos.forEach(recibo => { %>
+                        <tr id="recibo-<%= recibo.id_recibo %>">
+                            <td><%= recibo.id_recibo %></td>
+                            <td><%= recibo.numero_recibo %></td>
+                            <td><%= parseFloat(recibo.monto).toFixed(2) %></td>
+                            <td><%= new Date(recibo.fecha_emision).toLocaleDateString('es-GT') %></td>
+                            <td><%= recibo.fecha_pago ? new Date(recibo.fecha_pago).toLocaleDateString('es-GT') : 'N/A' %></td>
+                            <td><%= recibo.descripcion %></td>
+                            <td><%= recibo.nombre_alumno %></td>
+                            <td>
+                                <span class="badge badge-<%= recibo.estado === 'pagado' ? 'success' : recibo.estado === 'pendiente' ? 'warning' : 'danger' %>">
+                                    <%= recibo.estado %>
+                                </span>
+                            </td>
+                            <td><%= recibo.mes ? meses[recibo.mes - 1] || 'N/A' : 'N/A' %></td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="abrirModalEditar('<%= recibo.id_recibo %>')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarRecibo('<%= recibo.id_recibo %>')" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="verRecibo('<%= recibo.id_recibo %>')" title="Ver">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </body>
+        
+
+    <!-- Modal para Crear Recibo -->
+   <!-- Modal para Crear Recibo -->
+<div class="modal fade" id="modalCrearRecibo" tabindex="-1" role="dialog" aria-labelledby="modalCrearReciboLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCrearReciboLabel">Crear Nuevo Recibo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formCrearRecibo">
+                    <div class="form-group">
+                        <label for="numero_recibo">Número de Recibo</label>
+                        <input type="text" class="form-control" id="numero_recibo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="monto">Monto</label>
+                        <input type="number" class="form-control" id="monto" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="alumno_id">Alumno</label>
+                        <select class="form-control" name="id_alumno" id="alumno_id" required>
+                            <option value="">Selecciona un alumno</option>
+                            <% alumnos.forEach(alumno => { %>
+                                <option value="<%= alumno.id_alumno %>"><%= alumno.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_pago">Fecha de Pago</label>
+                        <input type="date" class="form-control" id="fecha_pago" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea class="form-control" id="descripcion"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select class="form-control" id="estado" required>
+                            <option value="pagado">Pagado</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mes">Mes</label>
+                        <select class="form-control" id="mes" required>
+                            <option value="">Selecciona un mes</option>
+                            <option value="Enero">Enero</option>
+                            <option value="Febrero">Febrero</option>
+                            <option value="Marzo">Marzo</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Mayo">Mayo</option>
+                            <option value="Junio">Junio</option>
+                            <option value="Julio">Julio</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Septiembre">Septiembre</option>
+                            <option value="Octubre">Octubre</option>
+                            <option value="Noviembre">Noviembre</option>
+                            <option value="Diciembre">Diciembre</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal para Editar Recibo -->
+<div class="modal fade" id="modalEditarRecibo" tabindex="-1" role="dialog" aria-labelledby="modalEditarReciboLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarReciboLabel">Editar Recibo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarRecibo">
+                    <input type="hidden" id="editar_id_recibo"> <!-- Campo oculto para almacenar el ID del recibo -->
+                    <div class="form-group">
+                        <label for="editar_numero_recibo">Número de Recibo</label>
+                        <input type="text" class="form-control" id="editar_numero_recibo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_monto">Monto</label>
+                        <input type="number" class="form-control" id="editar_monto" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_alumno_id">Alumno</label>
+                        <select class="form-control" name="id_alumno" id="editar_alumno_id" required>
+                            <option value="">Selecciona un alumno</option>
+                            <% alumnos.forEach(alumno => { %>
+                                <option value="<%= alumno.id_alumno %>"><%= alumno.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_fecha_pago">Fecha de Pago</label>
+                        <input type="date" class="form-control" id="editar_fecha_pago" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_descripcion">Descripción</label>
+                        <textarea class="form-control" id="editar_descripcion"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_estado">Estado</label>
+                        <select class="form-control" id="editar_estado" required>
+                            <option value="pagado">Pagado</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar_mes">Mes</label>
+                        <select class="form-control" id="editar_mes" required>
+                            <option value="">Selecciona un mes</option>
+                            <option value="Enero">Enero</option>
+                            <option value="Febrero">Febrero</option>
+                            <option value="Marzo">Marzo</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Mayo">Mayo</option>
+                            <option value="Junio">Junio</option>
+                            <option value="Julio">Julio</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Septiembre">Septiembre</option>
+                            <option value="Octubre">Octubre</option>
+                            <option value="Noviembre">Noviembre</option>
+                            <option value="Diciembre">Diciembre</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver recibo -->
+<!-- Modal para ver recibo -->
+<div class="modal fade" id="modalVerRecibo" tabindex="-1" role="dialog" aria-labelledby="modalVerReciboLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVerReciboLabel">Detalles del Recibo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="contenidoRecibo">
+                    <!-- Aquí se inyectará el diseño del recibo -->
+                </div>
+                <!-- Botón de impresión -->
+                <button class="btn btn-primary" style="margin-top: 20px;" id="btnImprimirRecibo">Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal para Eliminar Recibo -->
+<div class="modal fade" id="modalEliminarRecibo" tabindex="-1" role="dialog" aria-labelledby="modalEliminarReciboLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEliminarReciboLabel">Eliminar Recibo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este recibo?</p>
+                <input type="hidden" id="eliminar_id_recibo"> <!-- Campo oculto para almacenar el ID del recibo -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmarEliminarRecibo">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <!-- Añade esto para mostrar mensajes -->
+ <div id="messageBox" class="alert" style="display:none;"></div>
+
+<script>
+     // Mostrar mensajes de éxito o error
+     function mostrarMensaje(mensaje, tipo) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.classList.remove('alert-success', 'alert-danger');
+            messageBox.classList.add(tipo === 'success' ? 'alert-success' : 'alert-danger');
+            messageBox.innerHTML = `<i class="fas ${tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${mensaje}`;
+            messageBox.style.display = 'block'; // Muestra el mensaje
+            setTimeout(() => messageBox.style.display = 'none', 3000); // Oculta el mensaje después de 3 segundos
+        }
+
+    $(document).ready(function() {
+        // Función para crear un nuevo recibo
+        $('#formCrearRecibo').submit(function(e) {
+            e.preventDefault(); // Evita el envío del formulario de forma tradicional
+
+            // Obtenemos los datos del formulario
+            const nuevoRecibo = {
+                numero_recibo: $('#numero_recibo').val(),
+                monto: $('#monto').val(),
+                id_alumno: $('#alumno_id').val(),
+                fecha_pago: $('#fecha_pago').val(),
+                descripcion: $('#descripcion').val(),
+                estado: $('#estado').val(),
+                mes: $('#mes').val()
+            };
+
+            // Realizamos una solicitud POST para crear el recibo
+            $.post('/recibos/crear', nuevoRecibo, function(data) {
+                // Verificamos si se ha devuelto un recibo
+                if (!data.recibo) {
+                    mostrarMensaje("No se pudo crear el recibo.", "error");
+                    return;
+                }
+
+                // Agregamos la nueva fila a la tabla
+                const recibo = data.recibo; // Asumimos que 'recibo' está en la respuesta
+                const fila = `
+                    <tr id="recibo-${recibo.id_recibo}">
+                        <td>${recibo.id_recibo}</td>
+                        <td>${recibo.numero_recibo}</td>
+                        <td>${parseFloat(recibo.monto).toFixed(2)}</td>
+                        <td>${new Date(recibo.fecha_emision).toLocaleDateString('es-GT')}</td>
+                        <td>${recibo.fecha_pago ? new Date(recibo.fecha_pago).toLocaleDateString('es-GT') : 'N/A'}</td>
+                        <td>${recibo.descripcion}</td>
+                        <td>${recibo.nombre_alumno}</td>
+                        <td><span class="badge badge-${recibo.estado === 'pagado' ? 'success' : recibo.estado === 'pendiente' ? 'warning' : 'danger'}">${recibo.estado}</span></td>
+                        <td>${recibo.mes}</td> <!-- Nuevo campo mes -->
+                        <td>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalEditar('${recibo.id_recibo}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarRecibo('${recibo.id_recibo}')" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="verRecibo('${recibo.id_recibo}')" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+    
+                // Añadir la nueva fila a la tabla
+                $('tbody').append(fila);
+    
+                // Limpiar el formulario y cerrar el modal
+                $('#formCrearRecibo')[0].reset();
+                $('#modalCrearRecibo').modal('hide');
+                mostrarMensaje("Recibo creado con éxito.", "success"); // Mostrar mensaje de éxito
+            }).fail(function() {
+                mostrarMensaje("Error al crear el recibo. Por favor, intenta de nuevo.", "error"); // Mostrar mensaje de error
+            });
+        });
+
+        // Función para abrir el modal de edición
+        window.abrirModalEditar = function(id_recibo) {
+            console.log('ID del recibo a editar:', id_recibo); // Agregado para verificar el ID
+
+            // Hacer una solicitud para obtener los datos del recibo
+            $.get(`/recibos/${id_recibo}`, function(data) {
+                // Verificamos si se ha devuelto un recibo
+                if (!data.recibo) {
+                    mostrarMensaje("Recibo no encontrado.", "error");
+                    return;
+                }
+
+                const recibo = data.recibo;
+
+                // Rellenar el formulario con los datos del recibo
+                $('#editar_id_recibo').val(recibo.id_recibo);
+                $('#editar_numero_recibo').val(recibo.numero_recibo);
+                $('#editar_monto').val(recibo.monto);
+                $('#editar_alumno_id').val(recibo.id_alumno);
+                $('#editar_fecha_pago').val(recibo.fecha_pago ? new Date(recibo.fecha_pago).toISOString().substr(0, 10) : '');
+                $('#editar_descripcion').val(recibo.descripcion);
+                $('#editar_estado').val(recibo.estado);
+                $('#editar_mes').val(recibo.mes); // Nuevo campo mes
+
+                // Mostrar el modal de edición
+                $('#modalEditarRecibo').modal('show');
+            }).fail(function() {
+                mostrarMensaje('Error al cargar los datos del recibo.', "error");
+            });
+        };
+
+        // Función para manejar la edición del recibo
+        $('#formEditarRecibo').submit(function(e) {
+            e.preventDefault(); // Evita el envío del formulario de forma tradicional
+    
+            // Obtenemos los datos del formulario de edición
+            const reciboEditado = {
+                id_recibo: $('#editar_id_recibo').val(),
+                numero_recibo: $('#editar_numero_recibo').val(),
+                monto: $('#editar_monto').val(),
+                id_alumno: $('#editar_alumno_id').val(),
+                fecha_pago: $('#editar_fecha_pago').val(),
+                descripcion: $('#editar_descripcion').val(),
+                estado: $('#editar_estado').val(),
+                mes: $('#editar_mes').val() // Nuevo campo mes
+            };
+    
+            // Realizamos una solicitud POST para editar el recibo
+            $.post('/recibos/editar', reciboEditado, function(data) {
+                // Verificamos si se ha devuelto un recibo
+                if (!data.recibo) {
+                    mostrarMensaje("No se pudo editar el recibo.", "error");
+                    return;
+                }
+
+                // Actualiza la fila correspondiente en la tabla
+                const recibo = data.recibo;
+                const fila = `
+                    <tr id="recibo-${recibo.id_recibo}">
+                        <td>${recibo.id_recibo}</td>
+                        <td>${recibo.numero_recibo}</td>
+                        <td>${parseFloat(recibo.monto).toFixed(2)}</td>
+                        <td>${new Date(recibo.fecha_emision).toLocaleDateString('es-GT')}</td>
+                        <td>${recibo.fecha_pago ? new Date(recibo.fecha_pago).toLocaleDateString('es-GT') : 'N/A'}</td>
+                        <td>${recibo.descripcion}</td>
+                        <td>${recibo.nombre_alumno}</td>
+                        <td><span class="badge badge-${recibo.estado === 'pagado' ? 'success' : recibo.estado === 'pendiente' ? 'warning' : 'danger'}">${recibo.estado}</span></td>
+                        <td>${recibo.mes ? recibo.mes : 'N/A'}</td> <!-- Agregado el campo de mes aquí -->
+                        <td>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalEditar('${recibo.id_recibo}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarRecibo('${recibo.id_recibo}')" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="verRecibo('${recibo.id_recibo}')" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+    
+                // Actualiza la fila en la tabla
+                $(`#recibo-${recibo.id_recibo}`).replaceWith(fila);
+    
+                // Limpiar el formulario y cerrar el modal
+                $('#formEditarRecibo')[0].reset();
+                $('#modalEditarRecibo').modal('hide');
+                mostrarMensaje("Recibo editado con éxito.", "success");
+            }).fail(function() {
+                mostrarMensaje("Error al editar el recibo. Por favor, intenta de nuevo.", "error"); // Mostrar mensaje de error
+            });
+        });
+
+        // Función para abrir el modal de eliminar recibo
+        window.eliminarRecibo = function(id_recibo) {
+            $('#eliminar_id_recibo').val(id_recibo); // Guardar el ID del recibo en el campo oculto
+            $('#modalEliminarRecibo').modal('show'); // Mostrar el modal de eliminación
+        };
+
+        // Función para confirmar la eliminación del recibo
+        $('#confirmarEliminarRecibo').click(function() {
+            const id_recibo = $('#eliminar_id_recibo').val(); // Obtener el ID del recibo a eliminar
+
+            // Realizamos una solicitud DELETE para eliminar el recibo
+            $.ajax({
+                url: `/recibos/${id_recibo}`, // Asegúrate de que la URL coincida con la ruta del servidor
+                type: 'DELETE',
+                success: function(data) {
+                    if (data.success) {
+                        // Eliminar la fila correspondiente de la tabla
+                        $(`#recibo-${id_recibo}`).remove();
+                        mostrarMensaje("Recibo eliminado con éxito.", "success"); 
+                    } else {
+                        mostrarMensaje("No se pudo eliminar el recibo: " + data.message, "error");
+                    }
+                },
+                error: function() {
+                    mostrarMensaje("Error al eliminar el recibo. Por favor, intenta de nuevo.", "error"); 
+                }
+            });
+
+            $('#modalEliminarRecibo').modal('hide'); // Cerrar el modal
+        });
+
+// Función para ver el recibo
+window.verRecibo = function(id_recibo) {
+    $.get(`/recibos/${id_recibo}`, function(data) {
+        if (!data.recibo) {
+            mostrarMensaje("Recibo no encontrado.", "error"); 
+            return;
+        }
+
+        const recibo = data.recibo;
+
+   // Crear el diseño del recibo
+const contenido = `
+<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto; font-size: 18px;">
+    <!-- Logo de la escuela alineado horizontalmente con el nombre -->
+    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <img src="/img/home.jpg" alt="Logo Escuela" style="width: 100px; height: 100px; margin-right: 20px;">
+        <div style="text-align: center;">
+            <h2 style="margin: 0; font-size: 26px;">Escuela de Cristo CECEC</h2>
+            <p style="margin: 0; font-size: 16px;">
+                6ta calle 2-87 zona 4, colonia Venecia I, Villa Nueva Guatemala<br>
+                Teléfono: 3387 0932
+            </p>
+        </div>
+    </div>
+    <h2 style="text-align: center; font-size: 24px;">Recibo de Pago</h2>
+<p><strong>Número de Recibo:</strong> ${recibo.numero_recibo}</p>
+<p><strong>Monto:</strong> Q${parseFloat(recibo.monto).toFixed(2)}</p>
+<p><strong>Fecha de Emisión:</strong> ${new Date(recibo.fecha_emision).toLocaleDateString('es-GT')}</p>
+<p><strong>Fecha de Pago:</strong> ${recibo.fecha_pago ? new Date(recibo.fecha_pago).toLocaleDateString('es-GT') : 'N/A'}</p>
+<p><strong>Descripción:</strong> ${recibo.descripcion}</p>
+<p><strong>Alumno:</strong> ${recibo.nombre_alumno}</p>
+<p><strong>Mes:</strong> ${recibo.mes ? recibo.mes : 'N/A'}</p> <!-- Agregado el campo de mes aquí -->
+
+    
+    <!-- Espacio para firma y sello -->
+    <div style="margin-top: 60px;">
+        <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+            <!-- Firma (espacio para firmar) -->
+            <div style="text-align: center;">
+                <p style="margin-bottom: 50px;">_________________________</p>
+                <p><strong>Firma</strong></p>
+            </div>
+            <!-- Sello -->
+            <div style="text-align: center;">
+                <img src="/img/sello.webp" alt="Sello" style="width: 150px; height: 150px; margin-top: -20px;">
+            </div>
+        </div>
+    </div>
+</div>
+`;
+        // Inyectar el contenido en el modal
+        $('#contenidoRecibo').html(contenido);
+
+        // Mostrar el modal
+        $('#modalVerRecibo').modal('show');
+    }).fail(function() {
+        mostrarMensaje('Error al cargar los datos del recibo.', 'error');
+    });
+};
+
+window.imprimirRecibo = function() {
+    var contenido = document.getElementById('contenidoRecibo').innerHTML;
+
+    // Mensaje de confirmación antes de imprimir
+    if (!confirm("¿Estás seguro de que deseas imprimir el recibo?")) {
+        return; // Si el usuario cancela, salimos de la función
+    }
+
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    var doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <html>
+            <head>
+                <title>Imprimir Recibo</title>
+                <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+                <style>
+                    body {
+                        font-family: 'Margarine', cursive, Arial, sans-serif;
+                        margin: 0 auto;
+                        padding: 20px;
+                        width: 600px;
+                        text-align: left;
+                        font-size: 18px;
+                    }
+                    h2 {
+                        text-align: center;
+                        margin-bottom: 15px; /* Espaciado un poco mayor */
+                        font-size: 24px;
+                    }
+                    p {
+                        font-size: 18px;
+                        margin: 10px 0; /* Mayor separación entre párrafos */
+                    }
+                    .firma-sello {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 30px;
+                    }
+                    .firma-sello div {
+                        text-align: center;
+                    }
+                    @media print {
+                        body {
+                            margin: 0 auto;
+                            padding: 10px;
+                            width: 600px;
+                            height: auto;
+                        }
+                        @page {
+                            size: auto;
+                            margin: 10mm;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${contenido}
+            </body>
+        </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        iframe.contentWindow.onafterprint = function() {
+            document.body.removeChild(iframe);
+            mostrarMensaje("Recibo impreso con éxito.", "success"); // Mensaje de éxito
+        };
+    }, 500);
+}
+
+$('#btnImprimirRecibo').click(function() {
+    imprimirRecibo();
+});
+//cargando
+document.addEventListener("DOMContentLoaded", function () {
+            const loading = document.getElementById('loading');
+        
+            // Selecciona los enlaces del menú lateral
+            const moduleLinks = document.querySelectorAll('.nav-links a');
+        
+            moduleLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    // Mostrar el mensaje de "Cargando"
+                    loading.style.display = 'flex';
+        
+                    // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                    }, 8000); // Puedes ajustar el tiempo según lo que necesites
+                });
+            });
+        });
+    });
+</script>
+
+
+</body>
+</html>

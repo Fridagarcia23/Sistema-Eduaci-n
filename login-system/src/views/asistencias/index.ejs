@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistencia de Profesores</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <style>
+        .asistencia {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin: 5px;
+            text-align: center;
+            line-height: 30px;
+            font-size: 14px;
+            color: white;
+        }
+        .presente { background-color: #28a745; }
+        .tarde { background-color: #ffc107; }
+        .ausente { background-color: #dc3545; }
+
+        /* Estilo para la paginación */
+        .pagination {
+            justify-content: center; /* Centra la paginación */
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff; /* Color del botón activo */
+            border-color: #007bff; /* Color del borde del botón activo */
+        }
+        .pagination .page-link {
+            color: #007bff; /* Color del texto de los enlaces */
+            cursor: pointer; /* Cambia el cursor a puntero */
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d; /* Color del texto cuando está deshabilitado */
+            cursor: not-allowed; /* Cambia el cursor a no permitido */
+        } /* Estilo básico para el menú lateral */
+        body {
+           margin: 0;
+           font-family: 'Margarine', sans-serif;
+           display: flex;
+           min-height: 100vh;
+           background-color: #f7f7f7;
+       }
+       
+       /* Menú lateral */
+       .sidebar {
+           width: 210px;
+           background-color: #2a2d34;
+           color: #fff;
+           position: fixed;
+           height: 100%;
+           top: 0;
+           left: 0;
+           display: flex;
+           flex-direction: column;
+           transition: left 0.3s ease;
+           overflow: auto;
+       }
+       
+       .sidebar.active {
+           left: 0;
+       }
+       
+       .nav-links {
+           list-style: none;
+           padding: 0;
+           margin: 0;
+       }
+       
+       .nav-links li {
+           position: relative;
+       }
+       
+       .nav-links a {
+           display: flex;
+           align-items: center;
+           padding: 13.5px;
+           color: #fff;
+           text-decoration: none;
+           position: relative;
+           transition: transform 0.3s ease, background-color 0.3s ease;
+       }
+
+       .nav-links a i {
+        margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+        font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+        width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+        text-align: center; /* Centra el ícono dentro de ese espacio */
+    }
+       
+       .nav-links a:hover {
+           background-color: #3e4149;
+           transform: translateY(-5px);
+       }
+       
+       .header {
+           background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+           background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+           color: #030303;
+           padding: 12px;
+           position: fixed;
+           top: 0;
+           left: 250px;
+           width: calc(100% - 250px);
+           display: flex;
+           align-items: center;
+           justify-content: space-between;
+           z-index: 1000;
+       }
+       
+       .header-logo img {
+           height: 80px;
+           margin-right: 15px;
+       }
+       
+       .header h1 {
+           font-weight: 800;
+           font-size: 1.8em;
+           text-align: center;
+           margin: 0 auto;
+       }
+       
+       .content {
+           margin-left: 270px;
+           margin-top: 100px;
+           padding: 20px;
+       }
+
+       .header-section {
+           display: flex;
+           flex-direction: column;
+           align-items: flex-start; /* Alinea el contenido a la izquierda */
+           margin-left: 150px; /* Alinea a la izquierda en relación al contenido restante */
+           padding: 5px;
+       }
+       
+       .header-section h1 {
+           margin-bottom: 5px; /* Espacio entre el título y el botón */
+       }
+       
+       .header-section .btn {
+           margin-bottom: 20px; /* Espacio entre el botón y otros elementos */
+       }
+       
+       /* Ajusta el contenedor general para que no afecte el contenido del filtro y registro por página */
+       .container {
+           margin-top: 60px;
+           padding: 20px;
+       }
+
+       /* Estilos de los mensajes emergentes */
+       #messageBox {
+           position: fixed;
+           top: 20px;
+           right: 20px;
+           z-index: 1050;
+           width: 300px;
+       }
+       
+       /* Estilo básico para la tabla */
+       .table {
+           position:relative;
+           top: -10px;
+           margin-top: 0px;
+           border-collapse: collapse;
+           width: 90%; /* Reduce el ancho total de la tabla */
+           max-width: 90%; /* Ajusta la tabla para que no ocupe el 100% del ancho */
+           table-layout: fixed;
+           margin-right: auto; /* Centra la tabla */
+           margin-left: 160px;  /* Centra la tabla */
+       }
+       
+       .table th, .table td {
+           padding: 8px 8px;
+           text-align: left;
+           word-wrap: break-word; /* Permite que el contenido dentro de las celdas se ajuste */
+       }
+       
+       .table th {
+           background-color: #f8f9fa;
+           font-weight: bold;
+       }
+       
+       .table tbody tr:nth-child(even) {
+           background-color: #f2f2f2;
+       }
+       
+       .table thead th {
+           background-color: #359b16;
+           color: white;
+       }
+
+       /* Botones */
+       .btn {
+           display: inline-flex;
+           align-items: center;
+           padding: 8px 12px;
+           margin: 5px;
+           font-size: 16px;
+           color: #fff;
+           border: none;
+           border-radius: 4px;
+           cursor: pointer;
+       }
+       
+       .button-container {
+           margin-bottom: 20px; /* Espacio entre el botón y otros elementos */
+       }
+
+       .btn-primary {
+           background-color: #007bff;
+           border-color: #007bff;
+           font-weight: bold;
+       }
+       
+       .btn-primary:hover {
+           background-color: #0056b3;
+           border-color: #004085;
+           box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+       }
+
+       /* Estilo para los filtros */
+       .filter-container {
+           display: flex;
+           flex-wrap: wrap;
+           gap: 10px;
+           margin-top: 20px;
+           justify-content: flex-start; /* Mueve el filtro a la derecha */
+           margin-left: 160px;
+       }
+       
+       .filter-input {
+           max-width: 200px; /* Aumenta el tamaño del campo de entrada */
+           width: 200px; /* Asegura que se mantenga el ancho */
+           flex: 1;
+           padding: 23px; /* Aumenta el espacio interior sin afectar el tamaño de la fuente */
+           font-size: 16px; /* Mantiene el tamaño de la fuente */
+           border: 1px solid #ccc;
+           border-radius: 4px;
+       }
+       
+       .filter-button {
+           flex: 0 0 auto;
+           align-self: center;
+       }
+       
+       .btn-filter {
+           background-color: #007bff;
+           border-color: #007bff;
+       }
+       
+       .btn-filter:hover {
+           background-color: #0056b3;
+           border-color: #004085;
+       }
+       
+       /* Selección de registros por página */
+       .records-per-page-container {
+           display: flex;
+           align-items: center;
+           gap: 10px;
+           margin-top: -3px;
+           margin-bottom: 20px;
+           margin-left: 160px;
+       }
+       
+       .records-per-page-label {
+           font-weight: bold;
+       }
+       
+       .records-per-page-select {
+           max-width: 150px;
+       }
+
+       /* Estilos para los mensajes emergentes */
+       #messageBox {
+           position: fixed;
+           top: 20px;
+           right: 20px;
+           z-index: 1050;
+           width: 300px;
+       }
+
+       /* Paginación */
+       .pagination {
+           display: flex;
+           justify-content: center;
+           padding: 0;
+           margin: 20px 0;
+           list-style: none;
+       }
+       
+       .pagination .page-item {
+           margin: 0 5px;
+       }
+       
+       .pagination .page-link {
+           display: block;
+           padding: 8px 12px;
+           font-size: 12px;
+           color: #007bff;
+           background-color: #fff;
+           border: 1px solid #dee2e6;
+           border-radius: 4px;
+           text-decoration: none;
+       }
+       
+       .pagination .page-link:hover {
+           background-color: #e9ecef;
+           border-color: #ddd;
+       }
+       
+       .pagination .page-item.active .page-link {
+           background-color: #007bff;
+           border-color: #007bff;
+           color: #fff;
+           pointer-events: none;
+       }
+       
+       .pagination .page-link:focus, .pagination .page-link:active {
+           box-shadow: none;
+       }
+
+       /* Modales */
+       .modal-header {
+           background-color: #007bff;
+           color: white;
+       }
+       
+       .modal-header .btn-close {
+           color: white;
+       }
+       
+       .modal .btn {
+           margin-top: 10px;
+       }
+       #btnAddGrade i {
+           margin-right: 1px; /* Espacio entre el ícono y el texto */
+       }
+       .nav-category {
+           margin-bottom: 10px; /* Espacio entre categorías */
+           margin-top: 10px;
+       }
+       
+       .nav-category h3 {
+           font-size: 1em; /* Tamaño del texto del título */
+           color: #05f505; /* Color del título */
+           margin-bottom: 7px; /* Espacio debajo del título */
+       }
+
+       /* Fondo transparente que cubre toda la página */
+      /* Fondo transparente que cubre toda la página */
+.loading-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Contenido del cargando */
+.loading-content {
+   text-align: center;
+   color: white;
+   font-size: 24px;
+}
+
+/* Ícono de carga */
+.loading-content i {
+   font-size: 50px;
+   margin-bottom: 10px;
+}
+   </style>
+</head>
+<body>
+    <!-- Contenedor de carga -->
+<div id="loading" style="display: none;" class="loading-overlay">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando...</p>
+    </div>
+</div>
+<div class="dashboard-container">
+    <!-- Menú lateral -->
+    <nav class="sidebar">
+        <div class="nav-category">
+            <h3><i class="fas fa-cogs"></i> Administración</h3>
+            <ul class="nav-links">
+                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+            <ul class="nav-links">
+                <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+            <ul class="nav-links">
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+            <ul class="nav-links">
+                <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+            </ul>
+        </div>        
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Registro de Asistencia de Profesores</h1>
+    
+        <!-- Contenedor para el selector de fecha y el botón -->
+        <div class="d-flex justify-content-end mb-4 align-items-center"> <!-- Flexbox para alinear a la derecha y centrar verticalmente -->
+            <label for="fecha-asistencia" class="mr-2">Fecha:</label> <!-- Etiqueta para el selector -->
+            <input type="date" id="fecha-asistencia" name="fecha_asistencia" class="form-control mr-3" style="width: 200px;" required> <!-- Ancho ajustado -->
+            
+            <!-- Botón para guardar asistencia -->
+            <button id="guardar-asistencia" class="btn btn-success" onclick="prepararAsistencia(event)"> 
+                Guardar Asistencia <span id="fecha-seleccionada"> --/--/---- </span>
+            </button>
+        </div>
+    
+        <!-- Tabla de asistencia, movida a la derecha -->
+        <table class="table table-bordered table-striped" id="tabla-asistencia" style="margin-left: 240px;"> <!-- Añadir margen izquierdo -->
+            <thead style="background-color: #28a745; color: white;">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Asistencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% profesores.forEach(profesor => { %>
+                    <tr class="profesor-row">
+                        <td><%= profesor.nombre %></td>
+                        <td><%= profesor.email %></td>
+                        <td>
+                            <div class="asistencia presente" data-id="<%= profesor.id_profesor %>" data-estado="presente" style="background-color: #28a745;">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        
+        <!-- Paginación -->
+        <nav aria-label="Page navigation" id="pagination-container">
+            <ul class="pagination"></ul>
+        </nav>
+    </div>
+
+
+    <!-- Contenedor para mostrar mensajes -->
+<div id="messageBox" class="alert" style="display:none;"></div>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            const rowsPerPage = 5;
+            const rows = $('.profesor-row');
+            const totalRows = rows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            let currentPage = 1;
+        
+            function showPage(page) {
+                rows.hide(); // Ocultar todas las filas
+                const start = (page - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                rows.slice(start, end).show(); // Mostrar solo las filas de la página actual
+                updatePagination(page, totalPages); // Actualizar la paginación
+            }
+        
+            function updatePagination(page, totalPages) {
+                const paginationContainer = $('#pagination-container .pagination');
+                paginationContainer.empty(); // Limpiar el contenido previo
+        
+                // Botón anterior
+                if (page > 1) {
+                    paginationContainer.append(`<li class="page-item"><a class="page-link" href="#" data-page="${page - 1}">&laquo;</a></li>`);
+                } else {
+                    paginationContainer.append(`<li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>`);
+                }
+        
+                // Números de página
+                for (let i = 1; i <= totalPages; i++) {
+                    const activeClass = (i === page) ? 'active' : '';
+                    paginationContainer.append(`<li class="page-item ${activeClass}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`);
+                }
+        
+                // Botón siguiente
+                if (page < totalPages) {
+                    paginationContainer.append(`<li class="page-item"><a class="page-link" href="#" data-page="${page + 1}">&raquo;</a></li>`);
+                } else {
+                    paginationContainer.append(`<li class="page-item disabled"><a class="page-link" href="#">&raquo;</a></li>`);
+                }
+            }
+        
+            // Manejar clics en la paginación
+            $(document).on('click', '.page-link', function(event) {
+                event.preventDefault();
+                const page = $(this).data('page');
+                if (page) {
+                    currentPage = page;
+                    showPage(currentPage);
+                }
+            });
+        
+            // Manejar clics en los elementos de asistencia
+            $(document).on('click', '.asistencia', function() {
+                const $this = $(this);
+                const estadoActual = $this.data('estado');
+        
+                // Cambiar estado y clase según el estado actual
+                if (estadoActual === 'presente') {
+                    $this.data('estado', 'tarde');
+                    $this.removeClass('presente').addClass('tarde').html('<i class="fas fa-clock"></i>'); // Cambiar ícono a reloj
+                } else if (estadoActual === 'tarde') {
+                    $this.data('estado', 'ausente');
+                    $this.removeClass('tarde').addClass('ausente').html('<i class="fas fa-times"></i>'); // Cambiar ícono a cruz
+                } else {
+                    $this.data('estado', 'presente');
+                    $this.removeClass('ausente').addClass('presente').html('<i class="fas fa-check"></i>'); // Cambiar ícono a check
+                }
+                
+                // Cambiar el color según el estado
+                updateColor($this);
+            });
+        
+            // Función para actualizar el color del círculo de asistencia
+            function updateColor($element) {
+                const estado = $element.data('estado');
+                switch (estado) {
+                    case 'presente':
+                        $element.css('background-color', '#28a745'); // Verde
+                        break;
+                    case 'tarde':
+                        $element.css('background-color', '#ffc107'); // Amarillo
+                        break;
+                    case 'ausente':
+                        $element.css('background-color', '#dc3545'); // Rojo
+                        break;
+                }
+            }
+
+            // Manejar el cambio de fecha
+            $('#fecha-asistencia').on('change', function() {
+                const fechaSeleccionada = $(this).val();
+                $('#fecha-seleccionada').text(fechaSeleccionada || '--/--/----'); // Actualizar el texto del botón
+                // Aquí puedes hacer una llamada AJAX para cargar la asistencia de la fecha seleccionada
+                console.log("Fecha seleccionada: ", fechaSeleccionada);
+                // Implementa la lógica para cargar asistencia según la fecha seleccionada
+            });
+
+    // Enviar la data a tu servidor (aquí puedes ajustar la URL)
+    // Guardar asistencia
+    // Guardar asistencia
+    $('#guardar-asistencia').on('click', function() {
+        const fechaSeleccionada = $('#fecha-asistencia').val();
+        const asistenciaData = $('.asistencia').map(function() {
+            return { idProfesor: $(this).data('id'), estado: $(this).data('estado') };
+        }).get();
+
+        $.ajax({
+            url: '/asistencias/registrar',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ fecha: fechaSeleccionada, asistencia: asistenciaData }),
+            success: function(response) {
+                showMessage('success', 'Asistencia registrada correctamente.', 'fa-check-circle');
+            },
+            error: function() {
+                showMessage('danger', 'Error al registrar asistencia.', 'fa-exclamation-circle');
+            }
+        });
+    });
+
+    // Función para mostrar mensajes
+    function showMessage(type, message, iconClass) {
+        const messageBox = $('#messageBox');
+        messageBox.removeClass('alert-success alert-danger')
+            .addClass(`alert-${type}`)
+            .html(`<i class="fas ${iconClass}"></i> ${message}`)
+            .show();
+        setTimeout(() => messageBox.fadeOut(), 3000);
+    }
+
+    showPage(currentPage); // Mostrar la primera página
+});
+        //cargando
+    document.addEventListener("DOMContentLoaded", function () {
+        const loading = document.getElementById('loading');
+    
+        // Selecciona los enlaces del menú lateral
+        const moduleLinks = document.querySelectorAll('.nav-links a');
+    
+        moduleLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                // Mostrar el mensaje de "Cargando"
+                loading.style.display = 'flex';
+    
+                // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 8000); // Puedes ajustar el tiempo según lo que necesites
+            });
+        });
+    });        
+    </script>
+</body>
+</html>

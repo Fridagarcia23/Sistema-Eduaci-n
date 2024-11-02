@@ -257,7 +257,7 @@ body {
 }
 
 .sidebar {
-    width: 250px;
+    width: 210px;
     background-color: #2a2d34;
     color: #fff;
     position: fixed;
@@ -303,6 +303,13 @@ body {
 /* Animación de retorno a la posición original */
 .nav-links a {
     transition: transform 0.3s ease;
+}
+
+.nav-links a i {
+    margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+    font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+    width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+    text-align: center; /* Centra el ícono dentro de ese espacio */
 }
 
 .nav-links a:hover {
@@ -429,16 +436,15 @@ body {
                 <ul class="nav-links">
                     <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                     <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                    <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                    <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                    <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                    <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
                 </ul>
             </div>
             
             <div class="nav-category">
                 <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
                 <ul class="nav-links">
-                    <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                    <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                    <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
                 </ul>
             </div>
             
@@ -446,21 +452,12 @@ body {
                 <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
                 <ul class="nav-links">
                     <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                    <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
                 </ul>
             </div>        
         </nav>
-    
-        <!-- Cabecera -->
-        <header class="header">
-            <div class="header-logo">
-                <img src="/img/home.jpg" alt="Logo">
-            </div>
-            <h1>CENTRO ESCOLAR CECEC</h1>
-        </header>
 
     <div class="content">
-    <div class="container mt-4">
+    <div class="container mt-*">
         <h1>Usuarios</h1>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal"><i class="fas fa-user-plus"></i> Agregar Usuario</button>
         <!-- Botones de descarga con estilos consistentes -->
@@ -477,17 +474,6 @@ body {
         <i class="fas fa-file-pdf"></i> PDF Inactivo
 </button>
 
-        <!-- Opciones de cantidad de registros por página -->
-        <div class="records-per-page-container">
-            <label for="recordsPerPage" class="form-label">Registros por Página:</label>
-            <select id="recordsPerPage" class="form-control records-per-page-select">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </div>
-
         <div class="filter-container">
             <input type="text" id="nameFilter" class="form-control filter-input" placeholder="Nombre">
             <input type="text" id="emailFilter" class="form-control filter-input" placeholder="Correo">
@@ -503,8 +489,6 @@ body {
             </select>
             <button id="filterButton" class="btn btn-filter filter-button">Filtrar</button>
         </div>
-
-    
 
         <!-- Tabla de usuarios -->
         <table class="table mt-3">
@@ -561,9 +545,15 @@ body {
                                 <input type="email" class="form-control" id="correo" required>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" id="password" required>
-                            </div>
+                                
+                        <label for="password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" required>
+                            <span class="input-group-text">
+                                <i class="fas fa-eye" id="togglePasswordCreate" style="cursor: pointer;"></i>
+                            </span>
+                        </div>
+                    </div>
                             <div class="mb-3">
                                 <label for="telefono" class="form-label">Teléfono</label>
                                 <input type="text" class="form-control" id="telefono">
@@ -626,7 +616,12 @@ body {
                     </div>
                     <div class="mb-3">
                         <label for="editPassword" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="editPassword">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="editPassword" placeholder="En caso de no cambiar, dejar en blanco">
+                            <span class="input-group-text">
+                                <i class="fas fa-eye" id="togglePasswordEdit" style="cursor: pointer;"></i>
+                            </span>
+                        </div> 
                     </div>
                     <div class="mb-3">
                         <label for="editTelefono" class="form-label">Teléfono</label>
@@ -723,6 +718,7 @@ body {
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 
     <script>
+
             function showMessage(type, message) {
                 const messageBox = document.getElementById('messageBox');
                 messageBox.className = `alert alert-${type}`;
@@ -742,77 +738,93 @@ body {
             
             
             document.addEventListener('DOMContentLoaded', () => {
-                let currentPage = 1;
-                let recordsPerPage = 5;
+                const registrosPorPagina = 5; // Cambiar a 5 registros por página
+                let currentPage = 1; // Página actual
             
-                function loadUsers(page, records) {
-                    fetch(`/api/usuarios?page=${page}&records=${records}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const tableBody = document.getElementById('userTableBody');
-                            tableBody.innerHTML = '';
-            
-                            data.users.forEach(user => {
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td>${user.id_usuario}</td>
-                                    <td>${user.nombre_usuario}</td>
-                                    <td>${user.email}</td>
-                                    <td>${user.telefono}</td>
-                                    <td>${user.direccion}</td>
-                                    <td>${formatISOToDate(user.fecha_nacimiento)}</td>
-                                    <td>${user.genero}</td>
-                                    <td>${user.id_rol}</td>
-                                    <td>${user.estado}</td>
-                                    <td>
-                                        <div class="btn-group" role="group" aria-label="Acciones">
-                                            <button class="btn btn-info btn-sm" data-id="${user.id_usuario}" onclick="viewUser(this)"><i class="fas fa-eye"></i></button>
-                                            <button class="btn btn-warning btn-sm" data-id="${user.id_usuario}" onclick="editUser(this)"><i class="fas fa-edit"></i></button>
-                                            <button class="btn btn-danger btn-sm" data-id="${user.id_usuario}" onclick="deleteUser(this)"><i class="fas fa-trash"></i></button>
-                                        </div>
-                                    </td>
-                                `;
-                                tableBody.appendChild(row);
-                            });
-            
-                            const pagination = document.getElementById('pagination');
-                            pagination.innerHTML = '';
-            
-                            const createPageItem = (text, page, isDisabled = false, isActive = false) => {
-                                const li = document.createElement('li');
-                                li.className = `page-item${isDisabled ? ' disabled' : ''}${isActive ? ' active' : ''}`;
-                                li.innerHTML = `
-                                    <a class="page-link" href="#" data-page="${page}">${text}</a>
-                                `;
-                                return li;
-                            };
-            
-                            // Botón de "Anterior"
-                            pagination.appendChild(createPageItem('Anterior', currentPage - 1, currentPage === 1));
-            
-                            // Botones de páginas
-                            for (let i = 1; i <= data.totalPages; i++) {
-                                pagination.appendChild(createPageItem(i, i, false, i === currentPage));
-                            }
-            
-                            // Botón de "Siguiente"
-                            pagination.appendChild(createPageItem('Siguiente', currentPage + 1, currentPage === data.totalPages));
-                        })
-                        .catch(error => showMessage('danger', `Error al cargar usuarios: ${error.message}`));
-                }
-    
-                document.getElementById('pagination').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('page-link')) {
-                        e.preventDefault();
-                        const page = parseInt(e.target.getAttribute('data-page'));
-                        if (!isNaN(page) && page !== currentPage) {
-                            currentPage = page;
-                            loadUsers(page);
-                        }
-                    }
-                });
-    
-                loadUsers(currentPage);
+                function loadUsers(page, records = registrosPorPagina) {
+    fetch(`/api/usuarios?page=${page}&records=${records}`)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('userTableBody');
+            tableBody.innerHTML = '';
+
+            data.users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id_usuario}</td>
+                    <td>${user.nombre_usuario}</td>
+                    <td>${user.email}</td>
+                    <td>${user.telefono}</td>
+                    <td>${user.direccion}</td>
+                    <td>${formatISOToDate(user.fecha_nacimiento)}</td>
+                    <td>${user.genero}</td>
+                    <td>${user.nombre_rol}</td>
+                    <td>${user.estado}</td>
+                    <td>
+                        <div class="btn-group" role="group" aria-label="Acciones">
+                            <button class="btn btn-info btn-sm" data-id="${user.id_usuario}" onclick="viewUser(this)"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-warning btn-sm" data-id="${user.id_usuario}" onclick="editUser(this)"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm" data-id="${user.id_usuario}" onclick="deleteUser(this)"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            generatePagination(data.totalPages);
+        })
+        .catch(error => showMessage('danger', `Error al cargar usuarios: ${error.message}`));
+}
+
+function generatePagination(totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    const createPageItem = (text, page, isDisabled = false, isActive = false) => {
+        const li = document.createElement('li');
+        li.className = `page-item${isDisabled ? ' disabled' : ''}${isActive ? ' active' : ''}`;
+        li.innerHTML = `
+            <a class="page-link" href="#" data-page="${page}">${text}</a>
+        `;
+        return li;
+    };
+
+    // Botón de "Anterior"
+    pagination.appendChild(createPageItem('Anterior', currentPage - 1, currentPage === 1));
+
+    // Lógica para limitar el número de botones visibles
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Asegura que siempre haya 5 botones si hay suficientes páginas
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Botones de páginas
+    for (let i = startPage; i <= endPage; i++) {
+        pagination.appendChild(createPageItem(i, i, false, i === currentPage));
+    }
+
+    // Botón de "Siguiente"
+    pagination.appendChild(createPageItem('Siguiente', currentPage + 1, currentPage === totalPages));
+}
+
+// Evento para manejar clics en la paginación
+document.getElementById('pagination').addEventListener('click', (e) => {
+    if (e.target.classList.contains('page-link')) {
+        e.preventDefault();
+        const page = parseInt(e.target.getAttribute('data-page'));
+        if (!isNaN(page) && page !== currentPage) {
+            currentPage = page;
+            loadUsers(page);
+        }
+    }
+});
+
+// Cargar usuarios iniciales
+loadUsers(currentPage);
                 
                 window.viewUser = function(button) {
                     const id = button.getAttribute('data-id');
@@ -921,12 +933,11 @@ body {
                 });
         
                 window.deleteUser = function(button) {
-                    const id = button.getAttribute('data-id');
-                    document.getElementById('deleteUserButton').setAttribute('data-id', id);
-        
-                    const deleteUserModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-                    deleteUserModal.show();
-                }
+    const id = button.getAttribute('data-id');
+    document.getElementById('deleteUserButton').setAttribute('data-id', id);
+    const deleteUserModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    deleteUserModal.show();
+}
         
                 document.getElementById('deleteUserButton').addEventListener('click', () => {
                     const id = document.getElementById('deleteUserButton').getAttribute('data-id');
@@ -959,6 +970,7 @@ body {
 
             //reportes
          // Función para generar archivo Excel
+// Función para generar archivo Excel
 function generateExcel(users, status) {
     const filteredUsers = users.filter(user => user.estado === status);
 
@@ -967,6 +979,7 @@ function generateExcel(users, status) {
         return;
     }
 
+    // Crear los datos en formato de hoja de cálculo
     // Crear los datos en formato de hoja de cálculo
     const data = [];
     const headers = ['ID', 'Nombre', 'Correo', 'Teléfono', 'Dirección', 'Fecha de Nacimiento', 'Género', 'Rol', 'Estado'];
@@ -979,9 +992,9 @@ function generateExcel(users, status) {
             user.email,
             user.telefono,
             user.direccion,
-            user.fecha_nacimiento.split('T')[0],
+            user.fecha_nacimiento.split('T')[0], // Asegúrate de que la fecha esté bien formateada
             user.genero,
-            user.id_rol === 1 ? 'Administrador' : 'Profesor',
+            user.id_rol === 1 ? 'Administrador' : 'Profesor', // Cambia según tu lógica de roles
             user.estado
         ];
         data.push(row);
@@ -989,13 +1002,13 @@ function generateExcel(users, status) {
 
     // Crear una nueva hoja de trabajo (worksheet)
     const ws = XLSX.utils.aoa_to_sheet(data);
-    
+
     // Crear un nuevo libro de trabajo (workbook)
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `Usuarios ${status}`);
-    
-    // Descargar el archivo Excel
-    XLSX.writeFile(wb, `reporte_usuarios_${status}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+
+    // Generar archivo Excel
+    XLSX.writeFile(wb, `usuarios_${status}.xlsx`);
 }
 
 // Función para generar archivo PDF estilizado
@@ -1060,7 +1073,8 @@ function generateStyledPdf(users, status) {
 
 // Función para obtener usuarios y generar el archivo correspondiente
 function fetchUsersAndGenerateReport(status, type) {
-    fetch('/api/usuarios')
+    // Puedes agregar un parámetro para obtener todos los usuarios
+    fetch('/api/usuarios?all=true') // Asegúrate de que tu API acepte este parámetro
         .then(response => response.json())
         .then(data => {
             const users = data.users;
@@ -1166,17 +1180,6 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 });
 
-
-// Script para mostrar/ocultar el submenú de grados
-document.querySelectorAll('.nav-links li > a').forEach(menuItem => {
-    menuItem.addEventListener('click', function(event) {
-        const submenu = this.nextElementSibling;
-        if (submenu && submenu.classList.contains('submenu')) {
-            event.preventDefault();
-            submenu.classList.toggle('show');
-        }
-    });
-});
 //cargando
 document.addEventListener("DOMContentLoaded", function () {
     const loading = document.getElementById('loading');
@@ -1195,6 +1198,27 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 3000); // Puedes ajustar el tiempo según lo que necesites
         });
     });
+});
+// Para crear usuario
+const togglePasswordCreate = document.querySelector("#togglePasswordCreate");
+const passwordCreate = document.querySelector("#password");
+
+togglePasswordCreate.addEventListener("click", function () {
+    // Alternar el tipo de input entre 'password' y 'text'
+    const type = passwordCreate.getAttribute("type") === "password" ? "text" : "password";
+    passwordCreate.setAttribute("type", type);
+    // Cambiar el icono de 'ojo abierto' a 'ojo cerrado'
+    this.classList.toggle("fa-eye-slash");
+});
+
+// Para editar usuario
+const togglePasswordEdit = document.querySelector("#togglePasswordEdit");
+const passwordEdit = document.querySelector("#editPassword");
+
+togglePasswordEdit.addEventListener("click", function () {
+    const type = passwordEdit.getAttribute("type") === "password" ? "text" : "password";
+    passwordEdit.setAttribute("type", type);
+    this.classList.toggle("fa-eye-slash");
 });
 
     </script>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cursos del Profesor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <header class="mb-4">
+        <h1>Cursos Asignados a <%= user.nombre_usuario %></h1>
+        <p>Rol: <%= user.rol %></p>
+    </header>
+
+    <table class="table table-bordered table-striped">
+        <thead class="thead-light">
+            <tr>
+                <th>ID</th>
+                <th>Curso</th>
+                <th>Descripción</th>
+                <th>Grado</th>
+                <th>Profesor</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% cursos.forEach(curso => { %>
+                <tr>
+                    <td><%= curso.id_curso %></td>
+                    <td><%= curso.nombre_curso %></td>
+                    <td><%= curso.descripcion %></td>
+                    <td><%= curso.nombre_grado %></td>
+                    <td><%= curso.nombre_usuario %></td>
+                    <td><%= curso.estado %></td>
+                    <td>
+                        <% if (curso.guia_didactica) { %>
+                            <a href="/uploads/guides/<%= curso.guia_didactica %>" target="_blank">Ver Guía Didáctica</a>
+                        <% } else { %>
+                            Guía no disponible
+                        <% } %>
+                        <button class="btn btn-success" onclick="abrirSubirGuiaModal('<%= curso.id_curso %>')">
+                            <i class="fas fa-upload"></i> Subir Guía
+                        </button>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+    
+    <!-- Modal para subir la guía didáctica -->
+<!-- Modal para subir guía -->
+<div class="modal fade" id="subirGuiaModal" tabindex="-1" role="dialog" aria-labelledby="subirGuiaModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subirGuiaModalLabel">Subir Guía Didáctica</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formSubirGuia">
+                    <input type="hidden" id="id_curso" name="id_curso" value="">
+                    <div class="form-group">
+                        <label for="guia">Seleccionar archivo:</label>
+                        <input type="file" class="form-control" id="guia" name="guia" required>
+                    </div>
+                    <div id="mensaje"></div> <!-- Mensaje de respuesta -->
+                    <button type="submit" class="btn btn-primary">Subir Guía</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal para ver la guía didáctica -->
+<!-- Modal para ver guía -->
+<div class="modal fade" id="modalVerGuia" tabindex="-1" role="dialog" aria-labelledby="modalVerGuiaLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVerGuiaLabel">Ver Guía Didáctica</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Haz clic en el siguiente enlace para ver la guía:</p>
+                <a id="enlaceGuia" href="#" target="_blank">Ver Guía Didáctica</a>
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirSubirGuiaModal(idCurso) {
+            document.getElementById('id_curso').value = idCurso; // Asignar el ID del curso al campo oculto
+            $('#subirGuiaModal').modal('show'); // Mostrar el modal para subir la guía
+        }
+        function abrirVerGuiaModal(guia) {
+    const enlace = document.getElementById('enlaceGuia');
+    enlace.href = guia; // Establecer la URL de la guía
+    $('#modalVerGuia').modal('show'); // Mostrar el modal
+}
+    
+        // Manejar el envío del formulario
+        document.getElementById('formSubirGuia').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevenir el envío normal del formulario
+    
+            const formData = new FormData(this); // Crear FormData a partir del formulario
+    
+            // Enviar la solicitud AJAX
+            fetch(`/subir-guia/${document.getElementById('id_curso').value}`, {
+    method: 'POST',
+    body: formData
+})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('mensaje').innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+                    $('#subirGuiaModal').modal('hide'); // Cerrar el modal
+                } else {
+                    document.getElementById('mensaje').innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('mensaje').innerHTML = '<div class="alert alert-danger">Error al subir la guía didáctica.</div>';
+            });
+        });
+    </script>
+    
+</body>
+</html>

@@ -51,6 +51,12 @@
             text-decoration: none;
             position: relative;
         }
+        .nav-links a i {
+            margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+            font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+            width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+            text-align: center; /* Centra el ícono dentro de ese espacio */
+        }
         .nav-links a:hover {
             background-color: #3e4149;
         }
@@ -285,16 +291,15 @@
             <ul class="nav-links">
                 <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                 <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
             </ul>
         </div>
         
         <div class="nav-category">
             <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
             <ul class="nav-links">
-                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
             </ul>
         </div>
         
@@ -302,7 +307,6 @@
             <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
             <ul class="nav-links">
                 <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
             </ul>
         </div>        
     </nav>
@@ -322,8 +326,12 @@
                 <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">
                     <i class="fas fa-user-edit"></i> Editar Perfil
                 </a>               
-                <a href="#"><i class="fas fa-cogs"></i> Configuración</a>
-                <a href="#"><i class="fas fa-sign-out-alt"></i> Salir</a>
+                <a href="#" class="btn btn-primary" onclick="cargarDatosUsuario()" data-toggle="modal" data-target="#configuracionModal">
+                    <i class="fas fa-cogs"></i> Configuración
+                </a>
+                <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#logoutModal">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
             </div>
         </div>
     </header>
@@ -388,36 +396,108 @@
         </div>
     </div>
 </div>
+<!-- Modal de Configuración -->
+<!-- Modal de configuración -->
+<div class="modal fade" id="configuracionModal" tabindex="-1" role="dialog" aria-labelledby="configuracionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configuracionModalLabel">Configuración</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="configForm">
+                    <div class="form-group">
+                        <label for="configNombre">Nombre</label>
+                        <input type="text" class="form-control" id="configNombre" name="nombre_usuario" value="<%= user.nombre_usuario %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="configEmail">Email</label>
+                        <input type="email" class="form-control" id="configEmail" name="email" value="<%= user.email %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="configTelefono">Teléfono</label>
+                        <input type="text" class="form-control" id="configTelefono" name="telefono" value="<%= user.telefono %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="configDireccion">Dirección</label>
+                        <input type="text" class="form-control" id="configDireccion" name="direccion" value="<%= user.direccion %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="configGenero">Género</label>
+                        <select class="form-control" id="configGenero" name="genero" required>
+                            <option value="M" <%= user.genero === 'M' ? 'selected' : '' %>>Masculino</option>
+                            <option value="F" <%= user.genero === 'F' ? 'selected' : '' %>>Femenino</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="configContraseña">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="configContraseña" name="nueva_contrasena">
+                    </div>
+                    <div class="form-group">
+                        <label for="configConfirmarContraseña">Confirmar Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="configConfirmarContraseña" name="confirmar_contrasena">
+                    </div>
+                </form>                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" id="guardarConfiguracion" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-
-
+<<!-- Aquí va tu contenido HTML, incluyendo el modal -->
+<!-- Modal para cerrar sesión -->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">Cerrar Sesión</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h2>¿Está seguro de que desea cerrar sesión?</h2>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmLogout" class="btn btn-danger" onclick="confirmLogout()">Sí, cerrar sesión</button>
+                <button class="btn btn-secondary" data-dismiss="modal">No, cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
        // Obtener los valores de EJS para el mensaje
-       const userName = "<%= user.nombre_usuario %>";
-       const userRole = "<%= user.rol %>";
+    const userName = "<%= user.nombre_usuario %>";
+    const userRole = "<%= user.rol %>";
 
-       function showSuccessMessage() {
-           const message = document.getElementById('successMessage');
-           message.innerHTML = `<i class="fas fa-check-circle"></i> ¡Ingreso exitoso! Bienvenido, ${userRole} ${userName}.`;
-           message.style.display = 'block';
-           setTimeout(() => {
-               message.style.display = 'none';
-           }, 3000); // Mostrar el mensaje durante 3 segundos
-       }
+    function showSuccessMessage() {
+        const message = document.getElementById('successMessage');
+        message.innerHTML = `<i class="fas fa-check-circle"></i> ¡Ingreso exitoso! Bienvenido, ${userRole} ${userName}.`;
+        message.style.display = 'block';
+        setTimeout(() => {
+            message.style.display = 'none';
+        }, 3000); // Mostrar el mensaje durante 3 segundos
+    }
 
-       // Mostrar el mensaje cuando se carga la página
-       window.onload = showSuccessMessage;
+    // Mostrar el mensaje cuando se carga la página
+    window.onload = showSuccessMessage;
 
-       //perfil
-       document.getElementById('editProfileForm').addEventListener('submit', function(event) {
+    // Perfil
+    document.getElementById('editProfileForm').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevenir el comportamiento por defecto del formulario
-    
+
         let formData = new FormData(this); // Crear un objeto FormData con los datos del formulario
-    
+
         fetch('/uploadProfile', {
             method: 'POST',
             body: formData
@@ -430,12 +510,12 @@
                 if (profileImageElement) {
                     profileImageElement.src = data.imagePath;
                 }
-    
+
                 // Mostrar mensaje de éxito
                 let successMessage = document.getElementById('successMessage');
                 successMessage.classList.remove('d-none');
                 successMessage.textContent = data.message;
-    
+
                 // Cerrar el modal después de 2 segundos
                 setTimeout(() => {
                     $('#editProfileModal').modal('hide');
@@ -446,9 +526,97 @@
             console.error('Error al subir la imagen:', error);
         });
     });
+
+    function cargarDatosUsuario() {
+        fetch('/obtener-datos-usuario')
+            .then(response => response.json())
+            .then(data => {
+                // Actualizar los campos del formulario
+                document.getElementById('configNombre').value = data.nombre_usuario;
+                document.getElementById('configEmail').value = data.email;
+                document.getElementById('configTelefono').value = data.telefono;
+                document.getElementById('configDireccion').value = data.direccion;
+                document.getElementById('configGenero').value = data.genero;
+    
+                // Actualizar la información en el dashboard
+                document.getElementById('nombreUsuarioDashboard').textContent = data.nombre_usuario; // Asegúrate de que este ID exista
+                document.getElementById('emailUsuarioDashboard').textContent = data.email; // Asegúrate de que este ID exista
+                // Puedes agregar más actualizaciones de elementos del dashboard aquí si es necesario
+            })
+            .catch(error => console.error('Error al cargar los datos:', error));
+    }
     
     
-    
+    document.addEventListener('DOMContentLoaded', function() {
+    // Abrir el modal de configuración
+    const configuracionModal = new bootstrap.Modal(document.getElementById('configuracionModal'));
+
+    document.querySelector('a[data-toggle="modal"][data-target="#configuracionModal"]').addEventListener('click', function() {
+        cargarDatosUsuario();  // Cargar datos del usuario al abrir el modal
+        configuracionModal.show();  // Mostrar el modal
+    });
+
+    document.getElementById('guardarConfiguracion').addEventListener('click', function () {
+        const datosConfiguracion = {
+            nombre_usuario: document.getElementById('configNombre').value,
+            email: document.getElementById('configEmail').value,
+            telefono: document.getElementById('configTelefono').value,
+            direccion: document.getElementById('configDireccion').value,
+            genero: document.getElementById('configGenero').value,
+            nueva_contrasena: document.getElementById('configContraseña').value,
+            confirmar_contrasena: document.getElementById('configConfirmarContraseña').value
+        };
+
+        fetch('/guardar-configuracion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(datosConfiguracion)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al guardar la configuración');
+            return response.json();
+        })
+        .then(data => {
+            alert('Configuración guardada con éxito.');
+            cargarDatosUsuario(); // Actualiza datos en el dashboard
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('No se pudo guardar la configuración.');
+        })
+        .finally(() => {
+            configuracionModal.hide(); // Cierra el modal
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+        });
+    });
+});
+    // Función para abrir el modal
+function openModal() {
+    document.getElementById('logoutModal').style.display = 'block';
+}
+
+// Función para cerrar el modal
+function closeModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+
+// Función para confirmar el cierre de sesión
+function confirmLogout() {
+    // Aquí puedes hacer la lógica para cerrar sesión (por ejemplo, redirigir al login)
+    window.location.href = '/logout'; // Asegúrate de que esta ruta sea correcta
+}
+
+// Agregar un evento para cerrar el modal cuando se hace clic fuera de él
+window.onclick = function(event) {
+    const modal = document.getElementById('logoutModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
     </script>
 </body>
 </html>

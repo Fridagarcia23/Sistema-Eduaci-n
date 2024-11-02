@@ -17,10 +17,15 @@
            min-height: 100vh;
            background-color: #f7f7f7;
        }
+
+       .checkbox-list {
+    max-height: 150px; /* Altura máxima de la lista */
+    overflow-y: auto; /* Permitir desplazamiento si hay muchos checkboxes */
+}
        
        /* Menú lateral */
        .sidebar {
-           width: 250px;
+           width: 210px;
            background-color: #2a2d34;
            color: #fff;
            position: fixed;
@@ -56,37 +61,17 @@
            position: relative;
            transition: transform 0.3s ease, background-color 0.3s ease;
        }
+
+       .nav-links a i {
+        margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+        font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+        width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+        text-align: center; /* Centra el ícono dentro de ese espacio */
+    }
        
        .nav-links a:hover {
            background-color: #3e4149;
            transform: translateY(-5px);
-       }
-       
-       .header {
-           background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
-           background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-           color: #050505;
-           padding: 12px;
-           position: fixed;
-           top: 0;
-           left: 250px;
-           width: calc(100% - 250px);
-           display: flex;
-           align-items: center;
-           justify-content: space-between;
-           z-index: 1000;
-       }
-       
-       .header-logo img {
-           height: 80px;
-           margin-right: 15px;
-       }
-       
-       .header h1 {
-           font-weight: 800;
-           font-size: 1.8em;
-           text-align: center;
-           margin: 0 auto;
        }
        
        .content {
@@ -314,16 +299,15 @@
             <ul class="nav-links">
                 <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                 <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
             </ul>
         </div>
         
         <div class="nav-category">
             <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
             <ul class="nav-links">
-                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
             </ul>
         </div>
         
@@ -331,26 +315,20 @@
             <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
             <ul class="nav-links">
                 <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
             </ul>
         </div>        
     </nav>
-    <header class="header">
-        <div class="header-logo">
-            <img src="/img/home.jpg" alt="Logo">
-        </div>
-        <h1>CENTRO ESCOLAR CECEC</h1>
-    </header>
 
-    <div class="container mt-4">
-        <h1 class="mb-4 titulo-cursos">Cursos</h1>
+    <div class="container mt-2"> <!-- Cambié mt-4 a mt-2 para reducir el margen superior -->
+        <h1 class="mb-3 titulo-cursos">Cursos</h1> <!-- Cambié mb-4 a mb-3 para reducir el margen inferior -->
         
         <div class="button-container">
-            <button type="button" class="btn btn-primary mb-3 agregar-curso" data-toggle="modal" data-target="#createModal"><i class="fas fa-user-plus"></i> Agregar Curso
+            <button type="button" class="btn btn-primary mb-2 agregar-curso" data-toggle="modal" data-target="#createModal">
+                <i class="fas fa-user-plus"></i> Agregar Curso
             </button>
         </div>
-
-        <div class="filters">
+    
+        <div class="filters mb-2"> <!-- Añadido mb-2 para reducir el margen inferior -->
             <input type="text" id="filter_curso" placeholder="Curso">
             <input type="text" id="filter_grado" placeholder="Grado">
             <input type="text" id="filter_profesor" placeholder="Profesor">
@@ -360,7 +338,7 @@
                 <option value="inactivo">Inactivo</option>
             </select>
         </div>
-
+    
         <table class="table table-striped" id="cursosTable">
             <thead>
                 <tr>
@@ -370,6 +348,7 @@
                     <th>Grado</th>
                     <th>Profesor</th>
                     <th>Estado</th>
+                    <th>Alumnos</th> <!-- Nueva columna para los alumnos -->
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -382,6 +361,7 @@
                     <td><%= curso.nombre_grado %></td>
                     <td><%= curso.nombre_profesor %></td>
                     <td><%= curso.estado %></td>
+                    <td><%= curso.alumnos ? curso.alumnos : 'Ninguno' %></td> <!-- Mostrar IDs de alumnos o 'Ninguno' -->
                     <td>
                         <div class="btn-group" role="group" aria-label="Basic example">
                             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#viewModal<%= curso.id_curso %>">
@@ -396,6 +376,7 @@
                         </div>
                     </td>                    
                 </tr>
+    
 
                 <!-- Modal para Ver Curso -->
                 <div class="modal fade" id="viewModal<%= curso.id_curso %>" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
@@ -422,58 +403,74 @@
                 </div>
 
                 <!-- Modal para Editar Curso -->
-                <div class="modal fade" id="editModal<%= curso.id_curso %>" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form action="/cursos/editar/<%= curso.id_curso %>" method="POST">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editModalLabel">Editar Curso</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span>&times;</span>
-                                    </button>
+<div class="modal fade" id="editModal<%= curso.id_curso %>" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/cursos/editar/<%= curso.id_curso %>" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Curso</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre_curso">Nombre del Curso</label>
+                        <input type="text" class="form-control" id="nombre_curso" name="nombre_curso" value="<%= curso.nombre_curso %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" required><%= curso.descripcion %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_grado">Grado</label>
+                        <select class="form-control" id="id_grado" name="id_grado" required>
+                            <% grados.forEach(function(grado) { %>
+                                <option value="<%= grado.id_grado %>" <%= curso.id_grado === grado.id_grado ? 'selected' : '' %>><%= grado.nombre_grado %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_profesor">Profesor</label>
+                        <select class="form-control" id="id_profesor" name="id_profesor" required>
+                            <% profesores.forEach(function(profesor) { %>
+                                <option value="<%= profesor.id_profesor %>" <%= curso.id_profesor === profesor.id_profesor ? 'selected' : '' %>><%= profesor.nombre %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select class="form-control" id="estado" name="estado" required>
+                            <option value="activo" <%= curso.estado === 'activo' ? 'selected' : '' %>>Activo</option>
+                            <option value="inactivo" <%= curso.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
+                        </select>
+                    </div>
+                    <!-- Menú Desplegable para Alumnos -->
+                    <div class="form-group">
+                        <label for="alumnos">Alumnos</label>
+                        <div id="alumnosSelect<%= curso.id_curso %>" class="form-control" style="cursor: pointer;">
+                            Seleccionar Alumnos
+                        </div>
+                        <div class="checkbox-list" id="alumnosList<%= curso.id_curso %>" style="display: none; margin-top: 10px; border: 1px solid #ced4da; border-radius: 0.25rem; padding: 10px; background-color: #f9f9f9;">
+                            <% alumnos.forEach(function(alumno) { %>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="alumnos[]" value="<%= alumno.id_alumno %>" id="alumno<%= alumno.id_alumno %>" <%= curso.alumnos && curso.alumnos.includes(alumno.id_alumno) ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="alumno<%= alumno.id_alumno %>">
+                                        <%= alumno.nombre %>
+                                    </label>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="form-group">
-                                        <label for="nombre_curso">Nombre del Curso</label>
-                                        <input type="text" class="form-control" id="nombre_curso" name="nombre_curso" value="<%= curso.nombre_curso %>" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="descripcion">Descripción</label>
-                                        <textarea class="form-control" id="descripcion" name="descripcion" required><%= curso.descripcion %></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="id_grado">Grado</label>
-                                        <select class="form-control" id="id_grado" name="id_grado" required>
-                                            <% grados.forEach(function(grado) { %>
-                                                <option value="<%= grado.id_grado %>" <%= curso.id_grado === grado.id_grado ? 'selected' : '' %>><%= grado.nombre_grado %></option>
-                                            <% }); %>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="id_profesor">Profesor</label>
-                                        <select class="form-control" id="id_profesor" name="id_profesor" required>
-                                            <% profesores.forEach(function(profesor) { %>
-                                                <option value="<%= profesor.id_profesor %>" <%= curso.id_profesor === profesor.id_profesor ? 'selected' : '' %>><%= profesor.nombre %></option>
-                                            <% }); %>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="estado">Estado</label>
-                                        <select class="form-control" id="estado" name="estado" required>
-                                            <option value="activo" <%= curso.estado === 'activo' ? 'selected' : '' %>>Activo</option>
-                                            <option value="inactivo" <%= curso.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                    <button type="submit" class="btn btn-primary">Actualizar</button>
-                                </div>
-                            </form>
+                            <% }); %>
                         </div>
                     </div>
                 </div>
-
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                 <!-- Modal para Eliminar Curso -->
                 <div class="modal fade" id="deleteModal<%= curso.id_curso %>" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
@@ -508,58 +505,76 @@
     </ul>
 </nav>
 
-    <!-- Modal para Crear Curso -->
-    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="/cursos/crear" method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createModalLabel">Agregar Nuevo Curso</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span>&times;</span>
-                        </button>
+   <!-- Modal para Crear Curso -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/cursos/crear" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">Agregar Nuevo Curso</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre_curso">Nombre del Curso</label>
+                        <input type="text" class="form-control" id="nombre_curso" name="nombre_curso" required>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="nombre_curso">Nombre del Curso</label>
-                            <input type="text" class="form-control" id="nombre_curso" name="nombre_curso" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="descripcion">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="id_grado">Grado</label>
-                            <select class="form-control" id="id_grado" name="id_grado" required>
-                                <% grados.forEach(function(grado) { %>
-                                    <option value="<%= grado.id_grado %>"><%= grado.nombre_grado %></option>
-                                <% }); %>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="id_profesor">Profesor</label>
-                            <select class="form-control" id="id_profesor" name="id_profesor" required>
-                                <% profesores.forEach(function(profesor) { %>
-                                    <option value="<%= profesor.id_profesor %>"><%= profesor.nombre %></option>
-                                <% }); %>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="estado">Estado</label>
-                            <select class="form-control" id="estado" name="estado" required>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" required></textarea>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear</button>
+                    <div class="form-group">
+                        <label for="id_grado">Grado</label>
+                        <select class="form-control" id="id_grado" name="id_grado" required>
+                            <% grados.forEach(function(grado) { %>
+                                <option value="<%= grado.id_grado %>"><%= grado.nombre_grado %></option>
+                            <% }); %>
+                        </select>
                     </div>
-                </form>
-            </div>
+                    <div class="form-group">
+                        <label for="id_profesor">Profesor</label>
+                        <select class="form-control" id="id_profesor" name="id_profesor" required>
+                            <% profesores.forEach(function(profesor) { %>
+                                <option value="<%= profesor.id_profesor %>"><%= profesor.nombre %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select class="form-control" id="estado" name="estado" required>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="alumnos">Alumnos</label>
+                        <div id="alumnosSelect" class="form-control" style="cursor: pointer;">
+                            Seleccionar Alumnos
+                        </div>
+                        <div class="checkbox-list" id="alumnosList" style="display: none; margin-top: 10px; border: 1px solid #ced4da; border-radius: 0.25rem; padding: 10px; background-color: #f9f9f9;">
+                            <% alumnos.forEach(function(alumno) { %>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="alumnos[]" value="<%= alumno.id_alumno %>" id="alumno<%= alumno.id_alumno %>">
+                                    <label class="form-check-label" for="alumno<%= alumno.id_alumno %>">
+                                        <%= alumno.nombre %>
+                                    </label>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
@@ -707,7 +722,37 @@ function showPage(page) {
 }
 
 document.addEventListener('DOMContentLoaded', paginateTable);
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar el clic en el div que muestra la lista de alumnos para el modal de creación
+    const crearAlumnosSelect = document.getElementById('alumnosSelect');
+    const crearAlumnosList = document.getElementById('alumnosList');
+    
+    if (crearAlumnosSelect && crearAlumnosList) {
+        crearAlumnosSelect.addEventListener('click', function() {
+            crearAlumnosList.style.display = (crearAlumnosList.style.display === 'none' || crearAlumnosList.style.display === '') ? 'block' : 'none';
+        });
+    }
+    document.getElementById('alumnosSelect').addEventListener('click', function() {
+        var alumnosList = document.getElementById('alumnosList');
+        // Alternar la visibilidad de la lista de checkboxes
+        if (alumnosList.style.display === 'none' || alumnosList.style.display === '') {
+            alumnosList.style.display = 'block';
+        } else {
+            alumnosList.style.display = 'none';
+        }
+    });
 
+    // Manejar el clic en el div que muestra la lista de alumnos para el modal de edición
+    const alumnosSelects = document.querySelectorAll('[id^="alumnosSelect"]');
+    
+    alumnosSelects.forEach(select => {
+        select.addEventListener('click', function() {
+            const idCurso = select.id.replace('alumnosSelect', 'alumnosList');
+            const alumnosList = document.getElementById(idCurso);
+            alumnosList.style.display = (alumnosList.style.display === 'none' || alumnosList.style.display === '') ? 'block' : 'none';
+        });
+    });
+});
     </script>
 </body>
 </html>

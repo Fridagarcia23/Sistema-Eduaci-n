@@ -198,7 +198,7 @@
         }
         
         .sidebar {
-            width: 250px;
+            width: 210px;
             background-color: #2a2d34;
             color: #fff;
             position: fixed;
@@ -246,8 +246,11 @@
             transition: transform 0.3s ease;
         }
         
-        .nav-links a:hover {
-            background-color: #3e4149; /* Cambia el color de fondo al pasar el mouse */
+        .nav-links a i {
+            margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+            font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+            width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+            text-align: center; /* Centra el ícono dentro de ese espacio */
         }
         
         .header {
@@ -384,16 +387,15 @@
                 <ul class="nav-links">
                     <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                     <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                    <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                    <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                    <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                    <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
                 </ul>
             </div>
             
             <div class="nav-category">
                 <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
                 <ul class="nav-links">
-                    <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                    <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                    <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
                 </ul>
             </div>
             
@@ -401,114 +403,109 @@
                 <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
                 <ul class="nav-links">
                     <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                    <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
                 </ul>
             </div>        
         </nav>
-        <!-- Cabecera -->
-        <header class="header">
-            <div class="header-logo">
-                <img src="/img/home.jpg" alt="Logo">
+
+        <div class="container-fluid" style="margin-top: -40px; margin-left: -50px;"> <!-- Ajusta el margin-top aquí -->
+            <div class="header-section">
+                <h2 class="module-title">Alumnos</h2>
+                <div class="button-container">
+                    <button type="button" class="btn btn-primary btn-custom" data-toggle="modal" data-target="#addModal">
+                        <i class="fas fa-user-plus"></i> Agregar Alumno
+                    </button>
+                    <button class="btn export-button" id="descargarReportePrimaria" data-nivel="1">
+                        <i class="fas fa-file-pdf"></i> Primaria
+                    </button>
+                    <button class="btn export-button" id="descargarReporteBasico" data-nivel="2">
+                        <i class="fas fa-file-pdf"></i> Básico
+                    </button>
+                    <button class="btn export-button" id="descargarReporteDiversificado" data-nivel="3">
+                        <i class="fas fa-file-pdf"></i> Diversificado
+                    </button>
+                </div>
             </div>
-            <h1>CENTRO ESCOLAR CECEC</h1>
-        </header>
-
-    <div class="container mt-5">
-        <h2 class="module-title"> Alumnos</h2>
-<div class="button-container" style="display: flex; justify-content: flex-end;">
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
-        <i class="fas fa-user-plus"></i> Agregar Alumno
-    </button>
-    
-    <button class="btn export-button" id="descargarReportePrimaria" data-nivel="1">
-        <i class="fas fa-file-pdf"></i> Primaria
-    </button>
-    <button class="btn export-button" id="descargarReporteBasico" data-nivel="2">
-        <i class="fas fa-file-pdf"></i> Básico
-    </button>
-    <button class="btn export-button" id="descargarReporteDiversificado" data-nivel="3">
-        <i class="fas fa-file-pdf"></i> Diversificado
-    </button>
-</div>
-
-        <div class="filters">
-            <input type="text" id="filter_nombre" placeholder="Nombre">
-            <input type="text" id="filter_grado" placeholder="Grado">
-            <input type="text" id="filter_seccion" placeholder="Sección">
-            <select id="filter_estado">
-                <option value="">Estado</option>
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-            </select>
+        
+            <div class="filters mt-1">
+                <input type="text" id="filter_nombre" placeholder="Nombre">
+                <input type="text" id="filter_grado" placeholder="Grado">
+                <input type="text" id="filter_seccion" placeholder="Sección">
+                <select id="filter_estado">
+                    <option value="">Estado</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+        
+            <div class="table-container mt-1">
+                <table class="table" id="tablaAlumnos" style="border-collapse: collapse;"> <!-- Eliminamos el borde de la tabla -->
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Fecha de Nacimiento</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Sección</th>
+                            <th>Grado</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alumnosBody">
+                        <% alumnos.forEach(alumno => { %>
+                            <tr id="alumno-<%= alumno.id_alumno %>">
+                                <td><%= alumno.id_alumno %></td>
+                                <td><%= alumno.nombre %></td>
+                                <td><%= alumno.apellido %></td>
+                                <td><%= new Date(alumno.fecha_nacimiento).toLocaleDateString('es-GT') %></td>
+                                <td><%= alumno.email %></td>
+                                <td><%= alumno.telefono %></td>
+                                <td><%= alumno.seccion %></td>
+                                <td>
+                                    <% if (alumno.id_grado == 5) { %> Primero Primaria
+                                    <% } else if (alumno.id_grado == 6) { %> Segundo Primaria
+                                    <% } else if (alumno.id_grado == 7) { %> Tercero Primaria
+                                    <% } else if (alumno.id_grado == 8) { %> Cuarto Primaria
+                                    <% } else if (alumno.id_grado == 9) { %> Quinto Primaria
+                                    <% } else if (alumno.id_grado == 12) { %> Sexto Primaria
+                                    <% } else if (alumno.id_grado == 13) { %> Primero Básico
+                                    <% } else if (alumno.id_grado == 14) { %> Segundo Básico
+                                    <% } else if (alumno.id_grado == 15) { %> Tercero Básico
+                                    <% } else if (alumno.id_grado == 20) { %> Bachillerato en Ciencias Biológicas
+                                    <% } else if (alumno.id_grado == 21) { %> Bachillerato en Computación
+                                    <% } else if (alumno.id_grado == 22) { %> Bachillerato en Medicina
+                                    <% } else if (alumno.id_grado == 23) { %> Bachillerato en Magisterio
+                                    <% } else if (alumno.id_grado == 26) { %> Bachillerato en Turismo
+                                    <% } else if (alumno.id_grado == 27) { %> Bachillerato en Criminología
+                                    <% } else if (alumno.id_grado == 29) { %> Bachillerato en Secretariado
+                                    <% } else if (alumno.id_grado == 30) { %> Perito Contador
+                                    <% } %>
+                                </td>
+                                <td><%= alumno.estado %></td>
+                                <td>
+                                    <div class="button-group">
+                                        <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#viewModal" data-id="<%= alumno.id_alumno %>"><i class="fas fa-eye"></i></button>
+                                        <button class="btn btn-warning" data-toggle="modal" data-target="#editModal" data-id="<%= alumno.id_alumno %>"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger" data-id="<%= alumno.id_alumno %>" data-toggle="modal" data-target="#deleteModal"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#fichaModal" data-id="<%= alumno.id_alumno %>" onclick="verFicha(this)"><i class="fas fa-address-card"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        
+            <nav aria-label="Page navigation" class="mt-1">
+                <ul class="pagination justify-content-center" id="alumnosPagination">
+                    <!-- Aquí se llenarán los botones de paginación -->
+                </ul>
+            </nav>
         </div>
         
         
-        <div class="table-container">
-        <table class="table mt-3" id="alumnosTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Fecha de Nacimiento</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Sección</th>
-                    <th>Grado</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-        </div>
-            <tbody id="alumnosBody">
-                <% alumnos.forEach(alumno => { %>
-                    <tr>
-                        <td><%= alumno.id_alumno %></td>
-                        <td><%= alumno.nombre %></td>
-                        <td><%= alumno.apellido %></td>
-                        <td><%= new Date(alumno.fecha_nacimiento).toLocaleDateString('es-GT') %></td>
-                        <td><%= alumno.email %></td>
-                        <td><%= alumno.telefono %></td>
-                        <td><%= alumno.seccion %></td>
-                        <td>
-                            <% if (alumno.id_grado == 5) { %> Primero Primaria
-                            <% } else if (alumno.id_grado == 6) { %> Segundo Primaria
-                            <% } else if (alumno.id_grado == 7) { %> Tercero Primaria
-                            <% } else if (alumno.id_grado == 8) { %> Cuarto Primaria
-                            <% } else if (alumno.id_grado == 9) { %> Quinto Primaria
-                            <% } else if (alumno.id_grado == 12) { %> Sexto Primaria
-                            <% } else if (alumno.id_grado == 13) { %> Primero Básico
-                            <% } else if (alumno.id_grado == 14) { %> Segundo Básico
-                            <% } else if (alumno.id_grado == 15) { %> Tercero Básico
-                            <% } else if (alumno.id_grado == 20) { %> Bachillerato en Ciencias Biológicas
-                            <% } else if (alumno.id_grado == 21) { %> Bachillerato en Computación
-                            <% } else if (alumno.id_grado == 22) { %> Bachillerato en Medicina
-                            <% } else if (alumno.id_grado == 23) { %> Bachillerato en Magisterio
-                            <% } else if (alumno.id_grado == 26) { %> Bachillerato en Turismo
-                            <% } else if (alumno.id_grado == 27) { %> Bachillerato en Criminología
-                            <% } else if (alumno.id_grado == 29) { %> Bachillerato en Secretariado
-                            <% } else if (alumno.id_grado == 30) { %> Perito Contador
-                            <% } %>
-                        </td>
-                        <td><%= alumno.estado %></td>
-                        <td>
-                            <div class="button-group">
-                                <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#viewModal" data-id="<%= alumno.id_alumno %>"><i class="fas fa-eye"></i></button>
-                                <button class="btn btn-warning" data-toggle="modal" data-target="#editModal" data-id="<%= alumno.id_alumno %>"><i class="fas fa-edit"></i></button>
-                                <button class="btn btn-danger" data-toggle="modal" data-target="#deleteModal" data-id="<%= alumno.id_alumno %>"><i class="fas fa-trash"></i></button>
-                                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#fichaModal" data-id="<%= alumno.id_alumno %>" onclick="verFicha(this)"><i class="fas fa-address-card"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-    <nav aria-label="Page navigation">
-        <ul class="pagination" id="alumnosPagination">
-            <!-- Aquí se llenarán los botones de paginación -->
-        </ul>
-    </nav>
     <!-- Modal de agregar alumno -->
     <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -607,7 +604,7 @@
                         <label for="correo_madre">Correo de la Madre</label>
                         <input type="email" class="form-control" id="correo_madre" required>
                     </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
                     </form>
                 </div>
             </div>
@@ -712,6 +709,7 @@
                         <label for="edit_correo_madre">Correo de la Madre</label>
                         <input type="email" class="form-control" id="edit_correo_madre">
                     </div>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                         <button type="submit" class="btn btn-warning">Actualizar</button>
                     </form>
                 </div>
@@ -739,6 +737,9 @@
                 <p><strong>Sección:</strong> <span id="view_seccion"></span></p>
                 <p><strong>Grado:</strong> <span id="view_grado"></span></p>
                 <p><strong>Estado:</strong> <span id="view_estado"></span></p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -774,25 +775,27 @@
 </div>
 
     <!-- Modal de eliminar alumno -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Eliminar Alumno</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este alumno?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
-                </div>
+    <!-- Modal de eliminar alumno -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Eliminar Alumno</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este alumno?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
             </div>
         </div>
     </div>
+</div>
+
 
     <!-- Añade esto para mostrar mensajes -->
 <div id="messageBox" class="alert" style="display:none;"></div>
@@ -815,8 +818,7 @@
         const registrosPorPagina = 5; // Ajusta este número según sea necesario
         let paginaActual = 1;
 
-        
-// Función para cargar los datos de alumnos desde el backend
+        // Función para cargar los datos de alumnos desde el backend
 function cargarAlumnos() {
     fetch('/api/alumnos')
         .then(response => response.json())
@@ -866,12 +868,18 @@ function generarReporte(nivel) {
         doc.addImage(logo, 'PNG', 10, 10, 30, 30); // Ajusta tamaño y posición del logo
 
         // Título del reporte
-        doc.setFontSize(18);
-        doc.text('Centro Escolar La Escuela de Cristo', 90, 20, { align: "center" });
-        doc.setFontSize(14);
-        doc.text('Reporte de Alumnos', 125, 30, { align: "center" });
-        doc.setFontSize(12);
-        doc.text(`Nivel: ${nivel === 1 ? 'Primaria' : nivel === 2 ? 'Básico' : 'Diversificado'}`, 125, 40, { align: "center" });
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(24); // Tamaño del nombre del colegio
+        const colegioTexto = 'Centro Escolar La Escuela de Cristo';
+        const colegioX = (doc.internal.pageSize.getWidth() - doc.getTextWidth(colegioTexto)) / 2; // Cálculo para centrar
+        doc.text(colegioTexto, colegioX, 20);
+
+        // Cambiar a fuente Times para el nivel
+        doc.setFont('Times', 'normal');
+        doc.setFontSize(16); // Tamaño del nivel
+        const nivelTexto = `Nivel: ${nivel === 1 ? 'Primaria' : nivel === 2 ? 'Básico' : 'Diversificado'}`;
+        const nivelX = (doc.internal.pageSize.getWidth() - doc.getTextWidth(nivelTexto)) / 2; // Cálculo para centrar
+        doc.text(nivelTexto, nivelX, 40);
 
         // Filtrar alumnos según el nivel
         const alumnosFiltrados = alumnos.filter(alumno => {
@@ -895,6 +903,7 @@ function generarReporte(nivel) {
 
         // Si no hay datos
         if (alumnosFiltrados.length === 0) {
+            doc.setFont('Helvetica', 'normal');
             doc.text('No hay datos para mostrar.', 10, 50);
         } else {
             // Crear tabla con autoTable
@@ -903,8 +912,8 @@ function generarReporte(nivel) {
                 body: datos,
                 startY: 50, // Posición de la tabla en el eje Y
                 theme: 'grid', // Tema con líneas de tabla
-                headStyles: { fillColor: [144, 238, 144] }, // Color verde claro para el encabezado
-                styles: { fontSize: 10, cellPadding: 3 }, // Ajustes de estilo y espacio
+                headStyles: { fillColor: [76, 175, 80], font: 'Helvetica', fontStyle: 'bold' }, // Color verde claro y negrita para el encabezado
+                styles: { fontSize: 11, cellPadding: 3, font: 'Helvetica' }, // Ajustes de estilo y espacio
                 columnStyles: {
                     0: { cellWidth: 20 },  // ID
                     1: { cellWidth: 30 },  // Nombre
@@ -924,6 +933,7 @@ function generarReporte(nivel) {
         const fechaGeneracion = fechaActual.toLocaleDateString('es-GT');
         const horaGeneracion = fechaActual.toLocaleTimeString('es-GT');
         doc.setFontSize(8);
+        doc.setFont('Helvetica', 'normal');
         doc.text(`Generado el: ${fechaGeneracion} a las ${horaGeneracion}`, 10, doc.internal.pageSize.height - 10);
 
         // Guardar el documento PDF
@@ -931,10 +941,13 @@ function generarReporte(nivel) {
     };
 }
 
-        // Agregar alumno
+
         // Agregar alumno
         $('#addAlumnoForm').submit(function (event) {
-            event.preventDefault();
+            event.preventDefault(); // Detiene el comportamiento predeterminado de envío del formulario
+            console.log('Formulario enviado, evitando recarga.'); // Para verificar que se evita la recarga
+            
+            // Recopilar los datos del formulario
             const data = {
                 nombre: $('#nombre').val(),
                 apellido: $('#apellido').val(),
@@ -954,21 +967,30 @@ function generarReporte(nivel) {
                 correo_madre: $('#correo_madre').val()
             };
         
-            $.post('/alumnos', data, function (response) {
-                cargarAlumnos(); // Cargar la lista de alumnos actualizada
-                $('#addModal').modal('hide'); // Cerrar el modal
-                $('.modal-backdrop').remove(); // Eliminar el fondo oscuro
-                $('#addAlumnoForm')[0].reset(); // Resetear el formulario
-                showMessage('success', 'Alumno agregado con éxito'); // Mensaje de éxito
-            }).fail(function () {
-                showMessage('danger', 'Error al agregar el alumno'); // Mensaje de error
+            // Hacer la solicitud AJAX para agregar el alumno
+            $.ajax({
+                url: '/alumnos',
+                type: 'POST',
+                data: data,
+                success: function (response) {
+                    console.log('Respuesta del servidor:', response);
+                    cargarAlumnos();
+                    $('#addModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    $('#addAlumnoForm')[0].reset();
+                    showMessage('success', 'Alumno agregado con éxito');
+                },
+                error: function (error) {
+                    showMessage('danger', 'Error al agregar el alumno');
+                    console.error(error); // Para rastrear el error
+                }
             });
-        });
+        });            
         
         
+        
         // Editar alumno
-        // Editar alumno
-        // Editar alumno
+// Editar alumno
 $('#editAlumnoForm').submit(function (event) {
     event.preventDefault();
     const id = $('#edit_id').val();
@@ -995,17 +1017,58 @@ $('#editAlumnoForm').submit(function (event) {
         url: `/alumnos/${id}`,
         type: 'PUT',
         data: data,
-        success: function () {
-            cargarAlumnos(); // Cargar la lista de alumnos actualizada
+        success: function (alumnoActualizado) {
+            // Actualizar la fila del alumno en la tabla
+            actualizarFilaAlumno(alumnoActualizado);
             $('#editModal').modal('hide'); // Cerrar el modal
             $('.modal-backdrop').remove(); // Eliminar el fondo oscuro
-            showMessage('success', 'Alumno actualizado con éxito'); // Mensaje de éxito
+            showMessage('success', 'Alumno actualizado con éxito'); // Mostrar mensaje de éxito
         },
         error: function () {
             showMessage('danger', 'Error al actualizar el alumno'); // Mensaje de error
         }
     });
 });
+
+// Función para actualizar la fila del alumno en la tabla
+function actualizarFilaAlumno(alumno) {
+    const fila = $(`#alumno-${alumno.id_alumno}`);
+    
+    fila.find('td:eq(1)').text(alumno.nombre);
+    fila.find('td:eq(2)').text(alumno.apellido);
+    fila.find('td:eq(3)').text(new Date(alumno.fecha_nacimiento).toLocaleDateString('es-GT'));
+    fila.find('td:eq(4)').text(alumno.email);
+    fila.find('td:eq(5)').text(alumno.telefono);
+    fila.find('td:eq(6)').text(alumno.seccion);
+
+    // Actualizar el grado
+    let gradoTexto;
+    switch (alumno.id_grado) {
+        case 5: gradoTexto = 'Primero Primaria'; break;
+        case 6: gradoTexto = 'Segundo Primaria'; break;
+        case 7: gradoTexto = 'Tercero Primaria'; break;
+        case 8: gradoTexto = 'Cuarto Primaria'; break;
+        case 9: gradoTexto = 'Quinto Primaria'; break;
+        case 12: gradoTexto = 'Sexto Primaria'; break;
+        case 13: gradoTexto = 'Primero Básico'; break;
+        case 14: gradoTexto = 'Segundo Básico'; break;
+        case 15: gradoTexto = 'Tercero Básico'; break;
+        case 20: gradoTexto = 'Bachillerato en Ciencias Biológicas'; break;
+        case 21: gradoTexto = 'Bachillerato en Computación'; break;
+        case 22: gradoTexto = 'Bachillerato en Medicina'; break;
+        case 23: gradoTexto = 'Bachillerato en Magisterio'; break;
+        case 26: gradoTexto = 'Bachillerato en Turismo'; break;
+        case 27: gradoTexto = 'Bachillerato en Criminología'; break;
+        case 29: gradoTexto = 'Bachillerato en Secretariado'; break;
+        case 30: gradoTexto = 'Perito Contador'; break;
+        default: gradoTexto = 'Desconocido';
+    }
+    fila.find('td:eq(7)').text(gradoTexto);
+
+    // Actualizar estado
+    fila.find('td:eq(8)').text(alumno.estado);
+}
+
 
 // Cargar los datos del alumno en el modal
 $(document).on('click', '.btn-warning', function () {
@@ -1110,22 +1173,39 @@ $(document).on('click', '[data-target="#viewModal"]', function() {
     
         // Eliminar alumno
         // Eliminar alumno
-$('#confirmDelete').click(function () {
-    const id = $(this).data('id');
-    $.ajax({
-        url: `/alumnos/${id}`,
-        type: 'DELETE',
-        success: function () {
-            cargarAlumnos(); // Cargar la lista de alumnos actualizada
-            $('#deleteModal').modal('hide'); // Cerrar el modal de eliminación
-            showMessage('success', 'Alumno eliminado con éxito'); // Mensaje de éxito
-        },
-        error: function () {
-            showMessage('danger', 'Error al eliminar el alumno'); // Mensaje de error
-        }
+$(document).ready(function () {
+    // Mostrar modal y asignar el ID del alumno al botón "Eliminar"
+    $('#deleteModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Botón que abrió el modal
+        var alumnoId = button.data('id'); // Extraer el ID del alumno
+        var modal = $(this);
+    
+        // Asignar el ID al botón de confirmación de eliminación
+        modal.find('#confirmDelete').data('id', alumnoId);
     });
-});
-                $(document).ready(function () {
+
+    // Al hacer clic en el botón "Eliminar" dentro del modal
+    $('#confirmDelete').click(function () {
+        const id = $(this).data('id'); // Obtener el ID del alumno
+        $.ajax({
+            url: `/alumnos/${id}`,
+            type: 'DELETE',
+            success: function () {
+                // Eliminar la fila del alumno en la tabla sin recargar la página
+                $(`#alumno-${id}`).remove();
+                
+                // Cerrar el modal de eliminación
+                $('#deleteModal').modal('hide');
+                
+                // Mostrar mensaje de éxito
+                showMessage('success', 'Alumno eliminado con éxito');
+            },
+            error: function () {
+                // Mostrar mensaje de error
+                showMessage('danger', 'Error al eliminar el alumno');
+            }
+        });
+    });
         
             // Filtrar en tiempo real
             $('.filters input, #filter_estado').on('input change', function () {
@@ -1157,8 +1237,11 @@ $('#confirmDelete').click(function () {
                 }).hide();
             });
 
-            //paginacion
-            // Obtén todos los registros (filas) de la tabla
+            // Suponiendo que tienes el número de registros por página
+const registrosPorPagina = 5; // Cambia esto según lo que necesites
+let paginaActual = 1;
+
+// Obtén todos los registros (filas) de la tabla
 const alumnosTable = document.querySelectorAll("#alumnosBody tr");
 
 // Calcula el número total de páginas
@@ -1195,8 +1278,17 @@ function generarPaginacion() {
     });
     paginacion.appendChild(anterior);
 
+    // Lógica para limitar el número de botones visibles
+    const maxVisiblePages = 5; // Máximo de botones de página visibles
+    let startPage = Math.max(1, paginaActual - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPaginas, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
     // Botones de número de página
-    for (let i = 1; i <= totalPaginas; i++) {
+    for (let i = startPage; i <= endPage; i++) {
         const li = document.createElement("li");
         li.classList.add("page-item");
         if (i === paginaActual) li.classList.add("active");
@@ -1235,7 +1327,7 @@ function actualizarPaginacion() {
 // Inicializa la paginación y muestra la primera página
 generarPaginacion();
 mostrarPagina(1);
-        });
+});
          //cargando
          document.addEventListener("DOMContentLoaded", function () {
             const loading = document.getElementById('loading');

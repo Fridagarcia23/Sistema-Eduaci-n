@@ -113,7 +113,7 @@
 </head>
 <body>
     <header>
-        <img src="/img/home.jpg" alt="Logo de la Escuela"> <!-- Logo de la escuela -->
+        <img src="/img/home.jpg" alt="Logo de la Escuela">
         <h1>Contacto</h1>
         <nav>
             <a href="/home"><i class="fas fa-home"></i> Inicio</a>
@@ -123,10 +123,14 @@
             <a href="/contacto"><i class="fas fa-envelope"></i> Contacto</a>
         </nav>
     </header>
+    
+    <!-- Contenedor para el mensaje de confirmación en la esquina superior derecha -->
+    <div id="mensajeNotificacion" style="display: none;"></div>
+    
     <main>
         <section>
             <h2>Envíanos un Mensaje</h2>
-            <form action="/send-email" method="post">
+            <form id="contactForm" action="/send-email" method="post">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" required>
                 
@@ -143,14 +147,67 @@
             </form>
         </section>
     </main>
-
+    
     <footer>
         <p>© 2024 ING. Frida Berlinda Garcia</p>
     </footer>
     
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- jQuery (versión completa para soportar AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <style>
+        /* Estilo para el mensaje de notificación en el centro inferior de la pantalla */
+    #mensajeNotificacion {
+    position: fixed;
+    top: 70%; /* Ajusta la distancia desde la parte superior */
+    left: 50%; /* Centra horizontalmente */
+    transform: translate(-50%, -50%); /* Ajusta para centrar */
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #54d658; /* Verde para mensaje de éxito */
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra opcional para mejor visibilidad */
+}
+
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            $('#contactForm').on('submit', function(event) {
+                event.preventDefault(); // Evita el envío normal del formulario
+                
+                $.ajax({
+                    url: '/send-email',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        mostrarNotificacion(response, 'success');
+                    },
+                    error: function() {
+                        mostrarNotificacion('Error al enviar el correo', 'error');
+                    }
+                });
+            });
+
+            function mostrarNotificacion(mensaje, tipo) {
+                var notificacion = $('#mensajeNotificacion');
+                
+                notificacion.text(mensaje).show();
+                
+                // Estilo según tipo de mensaje (éxito o error)
+                if (tipo === 'success') {
+                    notificacion.css('background-color', '#4CAF50'); // Verde para éxito
+                } else {
+                    notificacion.css('background-color', '#f44336'); // Rojo para error
+                }
+
+                // Ocultar el mensaje después de 3 segundos
+                setTimeout(function() {
+                    notificacion.fadeOut();
+                }, 3000);
+            }
+        });
+    </script>
 </body>
-</html>

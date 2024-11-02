@@ -1,0 +1,608 @@
+<!-- Archivo: views/periodos/index.ejs -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Gestión de Períodos Escolares</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo básico para el menú lateral */
+        body {
+            margin: 0;
+            font-family: 'Margarine', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        
+        /* Menú lateral */
+        .sidebar {
+            width: 210px;
+            background-color: #2a2d34;
+            color: #fff;
+            position: fixed;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            overflow: auto;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 13.5px;
+            color: #fff;
+            text-decoration: none;
+            position: relative;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .nav-links a i {
+            margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+            font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+            width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+            text-align: center; /* Centra el ícono dentro de ese espacio */
+        }
+        
+        .nav-links a:hover {
+            background-color: #3e4149;
+            transform: translateY(-5px);
+        }
+        
+        .header {
+            background: -webkit-linear-gradient(38deg, #39bb25, #f4f816); /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(38deg, #39bb25, #f4f816); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            color: #050505;
+            padding: 12px;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            width: calc(100% - 250px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+        
+        .header-logo img {
+            height: 80px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            font-weight: 800;
+            font-size: 1.8em;
+            text-align: center;
+            margin: 0 auto;
+        }
+        
+        .content {
+            margin-left: 270px;
+            margin-top: 100px;
+            padding: 20px;
+        }
+ 
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Alinea el contenido a la izquierda */
+            margin-left: 150px; /* Alinea a la izquierda en relación al contenido restante */
+            padding: 5px;
+        }
+        
+        .header-section h1 {
+            margin-bottom: 5px; /* Espacio entre el título y el botón */
+        }
+        
+        .header-section .btn {
+            margin-bottom: 20px; /* Espacio entre el botón y otros elementos */
+        }
+        
+        /* Ajusta el contenedor general para que no afecte el contenido del filtro y registro por página */
+        .container {
+            margin-top: 60px;
+            padding: 20px;
+        }
+ 
+        /* Estilos de los mensajes emergentes */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            width: 300px;
+        }
+        
+        /* Estilo básico para la tabla */
+        /* Estilo básico para la tabla */
+ .table {
+     position: relative;
+     top: -10px;
+     margin-top: 30px;
+     border-collapse: collapse;
+     width: 180%;  /* Ajusta el ancho de la tabla al 80% del contenedor */
+     max-width: 1000px; /* Establece un ancho máximo para que no sea demasiado grande */
+     margin-left: auto; /* Centra la tabla */
+     margin-left: 160px; /* Centra la tabla */
+ }
+ 
+ .table th, .table td {
+     padding: 8px 8px;
+     text-align: left;
+     word-wrap: break-word; /* Permite que el contenido dentro de las celdas se ajuste */
+ }
+ 
+ .table th {
+     background-color: #f8f9fa;
+     font-weight: bold;
+ }
+ 
+ .table tbody tr:nth-child(even) {
+     background-color: #f2f2f2;
+ }
+ 
+ .table thead th {
+     background-color: #359b16;
+     color: white;
+ }
+ 
+         /*filtro*/
+         .filters {
+             margin-left: auto; /* Empuja el contenedor hacia la derecha */
+             margin-left: 160px; /* Controla la distancia del borde derecho */
+             display: flex;
+             gap: 10px; /* Espacio entre los elementos */
+             margin-top: -15px;
+         }
+         
+         .filters input,
+         .filters select {
+             padding: 8px;
+             font-size: 14px;
+             border: 1px solid #ccc; /* Define un borde gris claro inicialmente */
+             border-radius: 4px; /* Añade bordes redondeados */
+         }
+         
+         .filters input:focus,
+         .filters select:focus {
+         outline: none; /* Quita el borde por defecto al hacer focus */
+         border-color: #888; /* Color del borde más oscuro al hacer focus */
+         }
+ 
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px;
+            font-size: 16px;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .button-container {
+            margin-bottom: 20px; /* Espacio entre el botón y otros elementos */
+        }
+ 
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+ 
+        /* Modales */
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .modal-header .btn-close {
+            color: white;
+        }
+        
+        .modal .btn {
+            margin-top: 13px;
+        }
+        #btnAddGrade i {
+            margin-right: 1px; /* Espacio entre el ícono y el texto */
+        }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+        /* Estilos para el título */
+         .titulo-cursos {
+             text-align: right; /* Alinea el título a la derecha */
+             margin-top: 70px; /* Mueve el título hacia abajo */
+             margin-right: 820px; /* Controla la distancia del borde derecho */
+         }
+         /*estilo para boton de crear*/
+         .button-container {
+             margin-left: 155px; /* Mueve el botón a la derecha */
+             display: flex;
+             justify-content: flex-end; /* Mueve el botón a la derecha */
+             margin-top: -20px; /* Ajusta el margen superior para acercar el botón al título */
+             margin-right: 775px; /* Controla la distancia del borde derecho */
+         }
+         /* Fondo transparente que cubre toda la página */
+         .loading-overlay {
+             position: fixed;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             z-index: 1000; /* Asegura que esté por encima de otros elementos */
+         }
+ 
+         /* Contenido del cargando */
+         .loading-content {
+             text-align: center;
+             color: white;
+             font-size: 24px;
+         }
+ 
+         /* Ícono de carga */
+         .loading-content i {
+             font-size: 50px;
+             margin-bottom: 10px;
+         }
+         /* Estilos para los mensajes */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 300px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #fff;
+    background-color: #5cb85c; /* Color verde para éxito */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    transform: translateY(-20px);
+  }
+  
+  /* Animación para mostrar el mensaje */
+  .message-container.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Estilos para los mensajes de error */
+  .message-container.danger {
+    background-color: #d9534f; /* Color rojo para error */
+  }
+  
+    </style>
+ </head>
+ <body>
+
+     <!-- Mensaje de Cargando con iFrame GIF -->
+     <div id="loading" style="display: none;" class="loading-overlay">
+         <div class="loading-content">
+             <i class="fas fa-spinner fa-spin"></i>
+             <p>Cargando...</p>
+         </div>
+     </div>
+
+     <!-- Menú lateral -->
+    <nav class="sidebar">
+        <div class="nav-category">
+            <h3><i class="fas fa-cogs"></i> Administración</h3>
+            <ul class="nav-links">
+                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+                <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+            <ul class="nav-links">
+                <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+                <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+                <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+            <ul class="nav-links">
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+            <ul class="nav-links">
+                <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+            </ul>
+        </div>        
+    </nav>
+
+     <% if (session.message) { %>
+        <div class="alert alert-<%= session.message.type === 'success' ? 'success' : 'danger' %> alert-dismissible fade show" role="alert" 
+             style="position: fixed; top: 20px; right: 20px; z-index: 1050; white-space: nowrap;">
+            <i class="mr-2 <%= session.message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle' %>"></i>
+            <%= session.message.content %>
+        </div>
+        <% delete session.message; %>
+    <% } %>
+ 
+     
+    <div class="container mt-4">
+        <div class="text-left" style="margin-left: 10%;">
+            <h2>Gestión de Periodos Escolares</h2>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#agregarModal">
+                <i class="fas fa-calendar-plus"></i> Crear Período
+            </button>
+        </div>
+    
+        <!-- Tabla para mostrar los periodos escolares -->
+        <table class="table mt-3" style="margin-left: 10%;"> <!-- Añadido el margen izquierdo aquí -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre del Período</th>
+                    <th>Fecha de Inicio</th>
+                    <th>Fecha de Fin</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% periodos.forEach(function(periodo) { %>
+                <tr>
+                    <td><%= periodo.id_periodo %></td>
+                    <td><%= periodo.nombre_periodo %></td>
+                    <td><span class="fecha-inicio" data-fecha="<%= periodo.fecha_inicio %>"></span></td>
+                    <td><span class="fecha-fin" data-fecha="<%= periodo.fecha_fin %>"></span></td>
+                    <td><%= periodo.estado %></td>
+                    <td>
+                        <button class="btn btn-warning" data-toggle="modal" data-target="#editarModal<%= periodo.id_periodo %>"><i class="fas fa-edit"></i> </button>
+                        <button class="btn btn-danger" data-toggle="modal" data-target="#eliminarModal<%= periodo.id_periodo %>"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#migrarModal<%= periodo.id_periodo %>"><i class="fas fa-exchange-alt"></i></button>
+                    </td>
+                </tr>
+    
+                <!-- Modal para Editar Período -->
+                <div class="modal fade" id="editarModal<%= periodo.id_periodo %>" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form action="/periodos/editar/<%= periodo.id_periodo %>" method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Editar Período</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="nombre_periodo">Nombre del Período</label>
+                                        <input type="text" class="form-control" name="nombre_periodo" value="<%= periodo.nombre_periodo %>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fecha_inicio">Fecha de Inicio</label>
+                                        <input type="date" class="form-control" name="fecha_inicio" value="<%= periodo.fecha_inicio %>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fecha_fin">Fecha de Fin</label>
+                                        <input type="date" class="form-control" name="fecha_fin" value="<%= periodo.fecha_fin %>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="estado">Estado</label>
+                                        <select class="form-control" name="estado" required>
+                                            <option value="activo" <%= periodo.estado === 'activo' ? 'selected' : '' %>>Activo</option>
+                                            <option value="inactivo" <%= periodo.estado === 'inactivo' ? 'selected' : '' %>>Inactivo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Modal para Eliminar Período -->
+                <div class="modal fade" id="eliminarModal<%= periodo.id_periodo %>" tabindex="-1" role="dialog" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form action="/periodos/eliminar/<%= periodo.id_periodo %>" method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Eliminar Período</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro que deseas eliminar el período "<%= periodo.nombre_periodo %>"?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Modal para Migrar Datos -->
+                <div class="modal fade" id="migrarModal<%= periodo.id_periodo %>" tabindex="-1" role="dialog" aria-labelledby="migrarModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form action="/periodos/migrar" method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Migrar Datos al Período <%= periodo.nombre_periodo %></h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <label for="periodo_origen">Selecciona el Período de Origen</label>
+                                    <select class="form-control" name="id_periodo_origen" required>
+                                        <option value="">Selecciona un período</option>
+                                        <% periodos.forEach(function(periodoOrigen) { %>
+                                            <option value="<%= periodoOrigen.id_periodo %>"><%= periodoOrigen.nombre_periodo %></option>
+                                        <% }) %>
+                                    </select>
+                                    <input type="hidden" name="id_periodo_destino" value="<%= periodo.id_periodo %>">
+                                    <p>Se copiarán los datos de todo el sistema administrativo</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                    <button type="submit" class="btn btn-info">Migrar Datos</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    
+    
+
+<!-- Modal para Agregar Período -->
+<div class="modal fade" id="agregarModal" tabindex="-1" role="dialog" aria-labelledby="agregarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/periodos/crear" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Nuevo Período Escolar</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre_periodo">Nombre del Período</label>
+                        <input type="text" class="form-control" name="nombre_periodo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_inicio">Fecha de Inicio</label>
+                        <input type="date" class="form-control" name="fecha_inicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_fin">Fecha de Fin</label>
+                        <input type="date" class="form-control" name="fecha_fin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado</label>
+                        <select class="form-control" name="estado" required>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Período</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- jQuery y Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+
+    //cargando
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        const loading = document.getElementById('loading');
+    
+        // Selecciona los enlaces del menú lateral
+        const moduleLinks = document.querySelectorAll('.nav-links a');
+    
+        moduleLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                // Mostrar el mensaje de "Cargando"
+                loading.style.display = 'flex';
+    
+                // Simular un retardo o puedes ocultarlo cuando la nueva página cargue
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 8000); // Puedes ajustar el tiempo según lo que necesites
+            });
+        });
+    });        
+
+    $(document).ready(function() {
+        // Espera 5 segundos y luego oculta la alerta
+        setTimeout(function() {
+          $('.alert').alert('close');
+        }, 3000); // 5000 milisegundos = 5 segundos
+      });
+
+    // Función para formatear fechas
+    function formatearFecha(fecha) {
+        const opciones = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        return new Date(fecha).toLocaleDateString('es-GT', opciones);
+    }
+
+    // Formatear todas las fechas en la tabla
+    document.querySelectorAll('.fecha-inicio').forEach(span => {
+        span.textContent = formatearFecha(span.dataset.fecha);
+    });
+
+    document.querySelectorAll('.fecha-fin').forEach(span => {
+        span.textContent = formatearFecha(span.dataset.fecha);
+    });
+</script>
+
+
+</body>
+</html>

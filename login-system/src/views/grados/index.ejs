@@ -23,7 +23,7 @@
         
         /* Menú lateral */
         .sidebar {
-            width: 250px;
+            width: 210px;
             background-color: #2a2d34;
             color: #fff;
             position: fixed;
@@ -58,7 +58,16 @@
             text-decoration: none;
             position: relative;
             transition: transform 0.3s ease, background-color 0.3s ease;
+            gap: 15px; /* Espaciado entre ícono y texto */
         }
+        
+        .nav-links a i {
+            font-size: 16px; /* Asegura que todos los íconos tengan el mismo tamaño */
+            width: 30px; /* Ancho fijo para los íconos, ajustado según el tamaño del ícono más grande */
+            text-align: center; /* Centra el ícono en el espacio disponible */
+            display: inline-block; /* Asegura que el ícono y texto estén alineados correctamente */
+        }
+
         
         .nav-links a:hover {
             background-color: #3e4149;
@@ -351,6 +360,7 @@
 </head>
 <body>
     <!-- Menú lateral -->
+    <!-- Menú lateral -->
     <nav class="sidebar">
         <div class="nav-category">
             <h3><i class="fas fa-cogs"></i> Administración</h3>
@@ -368,16 +378,15 @@
             <ul class="nav-links">
                 <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                 <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
             </ul>
         </div>
         
         <div class="nav-category">
             <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
             <ul class="nav-links">
-                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
             </ul>
         </div>
         
@@ -385,70 +394,60 @@
             <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
             <ul class="nav-links">
                 <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
             </ul>
         </div>        
     </nav>
-    <header class="header">
-        <div class="header-logo">
-            <img src="/img/home.jpg" alt="Logo">
+    <div class="container-fluid" style="margin-top: 20px; margin-left: auto; margin-right: auto; max-width: 1200px;"> <!-- Ajusta el margen y el ancho máximo -->
+        <div class="header-section text-center mb-3"> <!-- Se centró el contenido y se añadió margen inferior -->
+            <h1 class="mt-3 mb-1">Grados</h1> <!-- Ajusta el margen superior e inferior -->
+            <button id="btnAddGrade" class="btn btn-primary" data-toggle="modal" data-target="#gradeModal">
+                <i class="fas fa-user-plus"></i> Agregar Grado
+            </button>
         </div>
-        <h1>CENTRO ESCOLAR CECEC</h1>
-    </header>
-    <div class="container">
-        <div class="header-section">
-            <h1 class="mt-4">Grados</h1>
-            <button id="btnAddGrade" class="btn btn-primary mb-4" data-toggle="modal" data-target="#gradeModal"> <i class="fas fa-user-plus"></i> Agregar Grado</button></div>
-        
-            <!-- Opciones de cantidad de registros por página -->
-        <div class="records-per-page-container">
-            <label for="recordsPerPage" class="form-label">Registros por Página:</label>
-            <select id="recordsPerPage" class="form-control records-per-page-select">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </div>
-         <!-- Filtros -->
-         <div class="filter-container mb-4">
-            <input type="text" id="nameFilter" class="form-control filter-input" placeholder="Nombre">
-            <input type="text" id="nivelFilter" class="form-control filter-input" placeholder="Nivel Académico">
-            <input type="text" id="seccionesFilter" class="form-control filter-input" placeholder="Secciones">
+    
+        <!-- Filtros -->
+        <div class="filter-container mb-4 text-center"> <!-- Centra los filtros -->
+            <input type="text" id="nameFilter" class="form-control filter-input" placeholder="Nombre" style="display: inline-block; width: auto; margin-right: 5px;">
+            <input type="text" id="nivelFilter" class="form-control filter-input" placeholder="Nivel Académico" style="display: inline-block; width: auto; margin-right: 5px;">
+            <input type="text" id="seccionesFilter" class="form-control filter-input" placeholder="Secciones" style="display: inline-block; width: auto; margin-right: 5px;">
             <button id="filterButton" class="btn btn-filter filter-button">Filtrar</button>
         </div>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre del Grado</th>
-                    <th>Nivel Académico</th>
-                    <th>Secciones</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="gradeTableBody">
-                <!-- Los datos se llenarán con JavaScript -->
-
-                <!-- Contenedor de carga -->
-<div id="loading" style="display: none;" class="loading-overlay">
-    <div class="loading-content">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>Cargando...</p>
-    </div>
-</div>
-            
-            </tbody>
-        </table>
-         <!-- Paginación -->
-         <nav aria-label="Page navigation">
+    
+        <div class="table-container mt-1">
+            <table class="table" id="gradeTable" style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre del Grado</th>
+                        <th>Nivel Académico</th>
+                        <th>Secciones</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="gradeTableBody">
+                    <!-- Los datos se llenarán con JavaScript -->
+                    <!-- Contenedor de carga -->
+                    <div id="loading" style="display: none;" class="loading-overlay">
+                        <div class="loading-content">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando...</p>
+                        </div>
+                    </div>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Paginación -->
+        <nav aria-label="Page navigation">
             <ul class="pagination justify-content-end" id="pagination">
                 <!-- Los botones de paginación se cargarán aquí -->
             </ul>
         </nav>
     </div>
-    </div>
-
+    
+    
+    
+    
 <!-- Modal -->
 <div class="modal fade" id="gradeModal" tabindex="-1" role="dialog" aria-labelledby="gradeModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

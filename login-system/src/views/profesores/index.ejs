@@ -152,7 +152,7 @@
         }
         
         .sidebar {
-        width: 250px;
+        width: 210px;
         background-color: #2a2d34;
         color: #fff;
         position: fixed;
@@ -197,6 +197,13 @@
         /* Animación de retorno a la posición original */
         .nav-links a {
             transition: transform 0.3s ease;
+        }
+
+        .nav-links a i {
+            margin-right: 15px; /* Mantiene el espacio entre icono y texto */
+            font-size: 16px; /* Asegura que todos los iconos tengan el mismo tamaño */
+            width: 20px; /* Añade un ancho fijo para mantener el espacio igual */
+            text-align: center; /* Centra el ícono dentro de ese espacio */
         }
         
         .nav-links a:hover {
@@ -317,15 +324,6 @@
             <p>Cargando...</p>
         </div>
     </div>
-    <div class="dashboard-container">
-        
-        <!-- Cabecera -->
-        <header class="header">
-            <div class="header-logo">
-                <img src="/img/home.jpg" alt="Logo">
-            </div>
-            <h1>CENTRO ESCOLAR CECEC</h1>
-        </header>
         <div class="dashboard-container">
             <!-- Menú lateral -->
             <nav class="sidebar">
@@ -345,16 +343,15 @@
                     <ul class="nav-links">
                         <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
                         <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
-                        <li><a href="/asistencia"><i class="fas fa-user-check"></i> Asistencia</a></li>
-                        <li><a href="/periodo"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+                        <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                        <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
                     </ul>
                 </div>
                 
                 <div class="nav-category">
                     <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
                     <ul class="nav-links">
-                        <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Pagos</a></li>
-                        <li><a href="/recibos"><i class="fas fa-file-invoice"></i> Crear Recibos</a></li>
+                        <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
                     </ul>
                 </div>
                 
@@ -362,28 +359,28 @@
                     <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
                     <ul class="nav-links">
                         <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-                        <li><a href="/notificaciones"><i class="fas fa-bell"></i> Notificaciones</a></li>
                     </ul>
                 </div>        
             </nav>
 </head>
 <body>
 
-    <div class="header-section">
-        <h2 class="module-title">Profesores</h2>
-        <button type="button" class="btn btn-primary btn-custom" data-toggle="modal" data-target="#modalAgregar">
-            <i class="fas fa-user-plus"></i> Agregar Profesor
-        </button>
-    </div>
+    <div class="container-fluid" style="margin-top: -80px; margin-left: -50px;">
+        <div class="header-section">
+            <h2 class="module-title">Profesores</h2>
+            <button type="button" class="btn btn-primary btn-custom" data-toggle="modal" data-target="#modalAgregar">
+                <i class="fas fa-user-plus"></i> Agregar Profesor
+            </button>
+        </div>
     
-            <div class="filters">
+        <div class="filters mt-1">
             <input type="text" id="filter_nombre" placeholder="Nombre">
             <input type="text" id="filter_especialidad" placeholder="Especialidad">
             <input type="text" id="filter_grado" placeholder="Grado">
             <input type="text" id="filter_seccion" placeholder="Sección">
         </div>
-
-        <div class="table-container">
+    
+        <div class="table-container mt-1">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -430,15 +427,16 @@
                 </tbody>
             </table>
         </div>
-        
+    
         <!-- Paginación -->
-        <nav aria-label="Page navigation">
+        <nav aria-label="Page navigation" class="mt-1">
             <ul class="pagination justify-content-center" id="profesoresPagination">
                 <!-- Los botones de paginación se generarán aquí -->
             </ul>
         </nav>
-        
-
+    </div>
+    
+    
     <!-- Modal para agregar profesor -->
     <!-- Modal para agregar profesor -->
 <div class="modal fade" id="modalAgregar" tabindex="-1" role="dialog">
@@ -456,22 +454,18 @@
                         <label for="nombre">Nombre:</label>
                         <input type="text" class="form-control" id="nombre" name="nombre" required>
                     </div>
-
                     <div class="form-group">
                         <label for="email">Correo:</label>
                         <input type="email" class="form-control" id="email" name="email" required>
                     </div>
-
                     <div class="form-group">
                         <label for="especialidad">Especialidad:</label>
                         <input type="text" class="form-control" id="especialidad" name="especialidad" required>
                     </div>
-
                     <div class="form-group">
                         <label for="experiencia_years">Años de Experiencia:</label>
                         <input type="number" class="form-control" id="experiencia_years" name="experiencia_years" required>
                     </div>
-
                     <div class="form-group">
                         <label for="id_grado">Grado</label>
                         <select class="form-control" id="id_grado" name="id_grado" multiple="multiple" required>
@@ -494,7 +488,6 @@
                             <option value="30">Perito Contador</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label for="id_seccion">Sección</label>
                         <select class="form-control" id="id_seccion" name="id_seccion" multiple="multiple" required>
@@ -504,7 +497,6 @@
                             <option value="233">D</option>
                         </select>
                     </div>               
-
                     <div class="form-group">
                         <label for="fecha_ingreso">Fecha de Ingreso:</label>
                         <input type="date" class="form-control" id="fecha_ingreso" name="fecha_ingreso" required>
@@ -516,7 +508,6 @@
         </div>
     </div>
 </div>
-
 
     <!-- Modal para editar profesor -->
     <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog">

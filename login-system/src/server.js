@@ -7,6 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+require('dotenv').config(); // Agrega esta línea al inicio de tu archivo
 const saltRounds = 10; // Número de rondas de sal para hashing
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -87,6 +88,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Configuración de Multer
+const storageGuide = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, 'public', 'uploads', 'guides')); // Nueva carpeta para guías
+  },
+  filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const uploadGuide = multer({ storage: storageGuide });
+
 // Middleware para manejar las peticiones POST
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -146,197 +159,255 @@ app.use(bodyParser.json());
 
 // Configuración de las rutas estáticas y vistas
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// Configuración del transportador de Nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: process.env.EMAIL_USER, // Usar variable de entorno
+      pass: process.env.EMAIL_PASS, // Usar variable de entorno
+  },
+});
 
 // Servir la vista principal
 app.get('/usuarios', (req, res) => {
   res.render('usuarios/index');
 });
 
-
 app.post('/login', (req, res) => {
   const { email, contraseña } = req.body;
 
   // Verificación de campos vacíos
   if (!email || !contraseña) {
-    req.session.error = 'Todos los campos son requeridos';
-    return res.redirect('/login');
+      req.session.error = 'Todos los campos son requeridos';
+      return res.redirect('/login');
   }
 
   const query = 'SELECT id_usuario, nombre_usuario, contraseña, id_rol, foto FROM usuarios WHERE email = ? AND estado = \'activo\'';
   db.query(query, [email], (err, results) => {
-    if (err) {
-      console.error('Error en la consulta de usuario:', err);
-      req.session.error = 'Error en el servidor';
-      return res.redirect('/login');
-    }
-
-    if (results.length === 0) {
-      req.session.error = 'Email, contraseña incorrectos o usuario inactivo';
-      return res.redirect('/login');
-    }
-
-    const usuario = results[0];
-
-    // Comparación de contraseña
-    bcrypt.compare(contraseña, usuario.contraseña, (err, result) => {
       if (err) {
-        console.error('Error al comparar la contraseña:', err);
-        req.session.error = 'Error en el servidor';
-        return res.redirect('/login');
-      }
-
-      if (!result) {
-        req.session.error = 'Email o contraseña incorrectos';
-        return res.redirect('/login');
-      }
-
-      // Obtener nombre del rol
-      const getRoleNameQuery = 'SELECT nombre_rol FROM roles WHERE id_rol = ?';
-      db.query(getRoleNameQuery, [usuario.id_rol], (err, roleResult) => {
-        if (err) {
-          console.error('Error al obtener el nombre del rol:', err);
+          console.error('Error en la consulta de usuario:', err);
           req.session.error = 'Error en el servidor';
           return res.redirect('/login');
-        }
+      }
 
-        req.session.user = {
-          id_usuario: usuario.id_usuario,
-          nombre_usuario: usuario.nombre_usuario,
-          rol: roleResult[0].nombre_rol,
-          profilePicture: usuario.foto || '/path/to/default/profile.jpg' // Cambia esta ruta
-        };
+      if (results.length === 0) {
+          req.session.error = 'Email, contraseña incorrectos o usuario inactivo';
+          return res.redirect('/login');
+      }
 
-        req.session.success = 'Bienvenido, has iniciado sesión exitosamente';
-        res.redirect('/dashboard'); // Asegúrate de que esta ruta esté correcta
+      const usuario = results[0];
+
+      // Comparación de contraseña
+      bcrypt.compare(contraseña, usuario.contraseña, (err, result) => {
+          if (err) {
+              console.error('Error al comparar la contraseña:', err);
+              req.session.error = 'Error en el servidor';
+              return res.redirect('/login');
+          }
+
+          if (!result) {
+              req.session.error = 'Email o contraseña incorrectos';
+              return res.redirect('/login');
+          }
+
+          // Obtener nombre del rol
+          const getRoleNameQuery = 'SELECT nombre_rol FROM roles WHERE id_rol = ?';
+          db.query(getRoleNameQuery, [usuario.id_rol], (err, roleResult) => {
+              if (err) {
+                  console.error('Error al obtener el nombre del rol:', err);
+                  req.session.error = 'Error en el servidor';
+                  return res.redirect('/login');
+              }
+
+              req.session.user = {
+                  id_usuario: usuario.id_usuario,
+                  nombre_usuario: usuario.nombre_usuario,
+                  rol: roleResult[0].nombre_rol,
+                  profilePicture: usuario.foto || '/path/to/default/profile.jpg' // Cambia esta ruta
+              };
+
+              req.session.success = 'Bienvenido, has iniciado sesión exitosamente';
+              res.redirect('/dashboard'); // Ruta para el dashboard de administrador
+          });
       });
-    });
   });
 });
 
-
-
-// En la vista de login
+// Vista de login
 app.get('/login', (req, res) => {
   const error = req.session.error;
   delete req.session.error;
   res.render('login', { error });
 });
 
-// Ruta GET para mostrar el formulario de login de profesor
-app.get('/login-profesor', (req, res) => {
-  const error = req.session.error;
-  delete req.session.error; // Elimina el error de la sesión después de mostrarlo
-  res.render('profesores/login-profesor', { error }); // Pasar el error a la vista
-});
-
-
-// En la vista del dashboard
+// Ruta para mostrar el dashboard de administrador
 app.get('/dashboard', (req, res) => {
+  if (!req.session.user || req.session.user.rol !== 'administrador') {
+      return res.redirect('/login'); // Redirige si no es un administrador
+  }
+  
   const success = req.session.success;
   delete req.session.success;
   res.render('dashboard', { success, user: req.session.user });
 });
 
-
-// Ruta para mostrar el dashboard de profesor
-app.get('/dashboard-profesor', (req, res) => {
-  // Verifica si el usuario está autenticado
-  if (!req.session.user) {
-    return res.redirect('/login-profesor'); // Redirige al login si no está autenticado
-  }
-
-  // Renderiza la vista del dashboard de profesor
-  res.render('dashboard-profesor', { user: req.session.user });
-});
-
-// Ruta para el login de profesor
-// Ruta para el login de profesor
+// Ruta para iniciar sesión como profesor
 app.post('/login-profesor', (req, res) => {
   const { email, contraseña } = req.body;
 
   // Verificación de campos vacíos
   if (!email || !contraseña) {
-    req.session.error = 'Todos los campos son requeridos';
-    return res.redirect('/login-profesor');
+      req.session.error = 'Todos los campos son requeridos';
+      return res.redirect('/login-profesor');
   }
 
-  const query = 'SELECT id_usuario, nombre_usuario, contraseña, id_rol, foto FROM usuarios WHERE email = ? AND estado = \'activo\'';
+  const query = 'SELECT id_usuario, nombre_usuario, contraseña, id_rol, foto FROM usuarios WHERE email = ? AND estado = "activo"';
   db.query(query, [email], (err, results) => {
-    if (err) {
-      console.error('Error en la consulta de usuario:', err);
-      req.session.error = 'Error en el servidor';
-      return res.redirect('/login-profesor');
-    }
-
-    if (results.length === 0) {
-      req.session.error = 'Email, contraseña incorrectos o usuario inactivo';
-      return res.redirect('/login-profesor');
-    }
-
-    const usuario = results[0];
-
-    // Comparación de contraseña
-    bcrypt.compare(contraseña, usuario.contraseña, (err, result) => {
       if (err) {
-        console.error('Error al comparar la contraseña:', err);
-        req.session.error = 'Error en el servidor';
-        return res.redirect('/login-profesor');
-      }
-
-      if (!result) {
-        req.session.error = 'Email o contraseña incorrectos';
-        return res.redirect('/login-profesor');
-      }
-
-      // Obtener el nombre del rol
-      const getRoleNameQuery = 'SELECT nombre_rol FROM roles WHERE id_rol = ?';
-      db.query(getRoleNameQuery, [usuario.id_rol], (err, roleResult) => {
-        if (err) {
-          console.error('Error al obtener el nombre del rol:', err);
+          console.error('Error en la consulta de usuario:', err);
           req.session.error = 'Error en el servidor';
           return res.redirect('/login-profesor');
-        }
+      }
 
-        req.session.user = {
-          id_usuario: usuario.id_usuario,
-          nombre_usuario: usuario.nombre_usuario,
-          rol: roleResult[0].nombre_rol,
-          profilePicture: usuario.foto || '/path/to/default/profile.jpg' // Cambia esta ruta
-        };
+      if (results.length === 0) {
+          req.session.error = 'Email o contraseña incorrectos, o usuario inactivo';
+          return res.redirect('/login-profesor');
+      }
 
-        req.session.success = 'Bienvenido, has iniciado sesión exitosamente';
-        res.redirect('/dashboard-profesor'); // Asegúrate de que esta ruta esté correcta
+      const usuario = results[0];
+
+      // Comparación de contraseña
+      bcrypt.compare(contraseña, usuario.contraseña, (err, result) => {
+          if (err) {
+              console.error('Error al comparar la contraseña:', err);
+              req.session.error = 'Error en el servidor';
+              return res.redirect('/login-profesor');
+          }
+
+          if (!result) {
+              req.session.error = 'Email o contraseña incorrectos';
+              return res.redirect('/login-profesor');
+          }
+
+          // Obtener el nombre del rol
+          const getRoleNameQuery = 'SELECT nombre_rol FROM roles WHERE id_rol = ?';
+          db.query(getRoleNameQuery, [usuario.id_rol], (err, roleResult) => {
+              if (err) {
+                  console.error('Error al obtener el nombre del rol:', err);
+                  req.session.error = 'Error en el servidor';
+                  return res.redirect('/login-profesor');
+              }
+
+              // Guardar información del usuario en la sesión
+              req.session.user = {
+                  id_usuario: usuario.id_usuario,
+                  nombre_usuario: usuario.nombre_usuario,
+                  rol: roleResult[0].nombre_rol,
+                  profilePicture: usuario.foto || '/path/to/default/profile.jpg' // Cambia esta ruta si tienes una imagen predeterminada
+              };
+
+              req.session.success = 'Bienvenido, has iniciado sesión exitosamente';
+              res.redirect('/dashboard-profesor'); // Redirige al dashboard de profesor
+          });
       });
-    });
+  });
+});
+
+// Vista de login para profesor
+app.get('/login-profesor', (req, res) => {
+  const error = req.session.error;
+  delete req.session.error; // Elimina el error de la sesión después de mostrarlo
+  res.render('profesores/login-profesor', { error });
+});
+
+// Ruta para mostrar el dashboard de profesor
+app.get('/dashboard-profesor', verificarAutenticacion, (req, res) => {
+  const success = req.session.success;
+  delete req.session.success; // Elimina el mensaje de éxito después de mostrarlo
+  res.render('dashboard-profesor', { user: req.session.user, success });
+});
+
+//contacto
+app.post('/send-email', (req, res) => {
+  const { nombre, email, telefono, mensaje } = req.body;
+
+  const mailOptions = {
+      from: email,
+      to: 'garciafrida5tobacoc@gmail.com', // Cambia esto a la dirección de correo que desees
+      subject: `Mensaje de ${nombre}`,
+      text: `Nombre: ${nombre}\nTeléfono: ${telefono}\nMensaje: ${mensaje}`,
+      html: `<strong>Nombre:</strong> ${nombre}<br><strong>Teléfono:</strong> ${telefono}<br><strong>Mensaje:</strong> ${mensaje}`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+          console.error(error);
+          return res.status(500).send('Error al enviar el correo');
+      }
+      console.log('Correo enviado:', info.response);
+      res.send('Correo enviado con éxito');
   });
 });
 
 
 // módulo usuarios
 // Ruta para obtener usuarios con paginación
+// Ruta para obtener usuarios con paginación o todos los usuarios
 app.get('/api/usuarios', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
+  const allUsers = req.query.all === 'true'; // Comprobar si se solicita obtener todos los usuarios
   const limit = 10;
+  const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * limit;
 
-  const query = `SELECT * FROM usuarios LIMIT ? OFFSET ?`;
-  db.query(query, [limit, offset], (err, results) => {
+  let query;
+  let queryParams = [];
+
+  if (allUsers) {
+      // Si se solicitan todos los usuarios, no aplicamos paginación
+      query = `
+        SELECT u.*, r.nombre_rol 
+        FROM usuarios u
+        JOIN roles r ON u.id_rol = r.id_rol
+      `;
+  } else {
+      // Si no, aplicamos la paginación
+      query = `
+        SELECT u.*, r.nombre_rol 
+        FROM usuarios u
+        JOIN roles r ON u.id_rol = r.id_rol
+        LIMIT ? OFFSET ?
+      `;
+      queryParams = [limit, offset];
+  }
+
+  db.query(query, queryParams, (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      // Contar el total de usuarios para paginación
-      db.query('SELECT COUNT(*) AS count FROM usuarios', (err, countResult) => {
-          if (err) return res.status(500).json({ error: err.message });
+      if (!allUsers) {
+          // Contar el total de usuarios para paginación solo si no se solicitan todos
+          db.query('SELECT COUNT(*) AS count FROM usuarios', (err, countResult) => {
+              if (err) return res.status(500).json({ error: err.message });
 
+              res.json({
+                  users: results,
+                  totalPages: Math.ceil(countResult[0].count / limit)
+              });
+          });
+      } else {
+          // Si se solicitan todos los usuarios, solo devuelve los resultados
           res.json({
               users: results,
-              totalPages: Math.ceil(countResult[0].count / limit)
+              totalPages: 1 // Puedes devolver 1 si no se usa paginación
           });
-      });
+      }
   });
 });
+
+
 
 // Ruta para obtener un usuario específico
 app.get('/api/usuarios/:id', (req, res) => {
@@ -401,22 +472,25 @@ app.put('/api/usuarios/:id', (req, res) => {
 });
 
 // Ruta para eliminar usuario
-app.delete('/api/usuarios/:id', (req, res) => {
+app.delete('/api/usuarios/:id', async (req, res) => {
   const id = req.params.id;
 
-  // Primero eliminar de la tabla profesores
-  const sqlProfesor = 'DELETE FROM profesores WHERE id_profesor = ?';
-  db.query(sqlProfesor, [id], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
+  try {
+      // Primero, elimina las asistencias relacionadas
+      await db.query('DELETE FROM asistencias WHERE id_profesor = ?', [id]);
+      
+      // Luego, elimina de la tabla profesores
+      await db.query('DELETE FROM profesores WHERE id_profesor = ?', [id]);
+      
+      // Finalmente, elimina de la tabla usuarios
+      await db.query('DELETE FROM usuarios WHERE id_usuario = ?', [id]);
 
-      // Luego eliminar de la tabla usuarios
-      const sqlUsuario = 'DELETE FROM usuarios WHERE id_usuario = ?';
-      db.query(sqlUsuario, [id], (err) => {
-          if (err) return res.status(500).json({ error: err.message });
-          res.json({ message: 'Usuario y profesor eliminados exitosamente' });
-      });
-  });
+      res.json({ message: 'Usuario, profesor y asistencias eliminados exitosamente' });
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
 });
+
 
 // Configuración de la carpeta de uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
@@ -614,7 +688,6 @@ app.post('/api/grados/delete', (req, res) => {
 });
 
 // Módulo alumnos
-// En tu archivo server.js o similar
 app.get('/api/alumnos', (req, res) => {
   // Suponiendo que usas MySQL
   db.query('SELECT * FROM alumnos', (error, results) => {
@@ -683,10 +756,9 @@ app.post('/alumnos', (req, res) => {
 });
 
 
-// Eliminar un alumno
 app.delete('/alumnos/:id', (req, res) => {
   const { id } = req.params;
-  db.query('DELETE FROM alumnos WHERE id_alumno=?', [id], (err) => {
+  db.query('DELETE FROM alumnos WHERE id_alumno = ?', [id], (err) => {
       if (err) return res.status(500).send(err);
       res.send('Alumno eliminado');
   });
@@ -701,28 +773,38 @@ app.put('/alumnos/:id', (req, res) => {
     nombre_madre, telefono_madre, correo_madre 
   } = req.body;
 
-  db.query(
-    `UPDATE alumnos 
-     SET nombre=?, apellido=?, fecha_nacimiento=?, email=?, telefono=?, seccion=?, estado=?, id_grado=?, 
-         nombre_padre=?, telefono_padre=?, correo_padre=?, 
-         nombre_madre=?, telefono_madre=?, correo_madre=? 
-     WHERE id_alumno=?`, 
-    [
-      nombre, apellido, fecha_nacimiento, email, telefono, seccion, estado, id_grado, 
-      nombre_padre, telefono_padre, correo_padre, 
-      nombre_madre, telefono_madre, correo_madre, 
-      id
-    ], 
-    (err) => {
-      if (err) {
-        console.error(err); // Imprimir el error en consola
-        return res.status(500).send(err);
-      }
-      res.send('Alumno actualizado');
-    }
-  );
-});
+  const query = `
+    UPDATE alumnos 
+    SET nombre=?, apellido=?, fecha_nacimiento=?, email=?, telefono=?, seccion=?, estado=?, id_grado=?, 
+        nombre_padre=?, telefono_padre=?, correo_padre=?, 
+        nombre_madre=?, telefono_madre=?, correo_madre=? 
+    WHERE id_alumno=?`;
 
+  const values = [
+    nombre, apellido, fecha_nacimiento, email, telefono, seccion, estado, id_grado, 
+    nombre_padre, telefono_padre, correo_padre, 
+    nombre_madre, telefono_madre, correo_madre, 
+    id
+  ];
+
+  db.query(query, values, (err) => {
+    if (err) {
+      console.error(err); // Imprimir el error en consola
+      return res.status(500).send('Error al actualizar el alumno');
+    }
+
+    // Si la actualización fue exitosa, realizar una consulta para devolver los datos actualizados
+    db.query('SELECT * FROM alumnos WHERE id_alumno = ?', [id], (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al obtener los datos actualizados');
+      }
+
+      // Devolver los datos del alumno actualizado
+      res.json(results[0]);
+    });
+  });
+});
 
 //modulo profesores
 // Ruta para mostrar la vista de profesores
@@ -929,41 +1011,78 @@ app.delete('/profesores/:id', (req, res) => {
 
 app.get('/cursos', (req, res) => {
   const sql = `
-      SELECT c.*, g.nombre_grado, p.nombre AS nombre_profesor 
-      FROM cursos c 
-      JOIN grados g ON c.id_grado = g.id_grado 
-      JOIN profesores p ON c.id_profesor = p.id_profesor
-  `;
-  db.query(sql, (err, cursos) => {
+    SELECT 
+        c.id_curso,
+        c.nombre_curso,
+        c.descripcion,
+        g.nombre_grado,
+        p.nombre AS nombre_profesor,
+        c.estado,
+        GROUP_CONCAT(a.nombre) AS alumnos -- Obtener nombres de alumnos
+    FROM 
+        cursos c
+    JOIN 
+        grados g ON c.id_grado = g.id_grado
+    JOIN 
+        profesores p ON c.id_profesor = p.id_profesor
+    LEFT JOIN 
+        inscripciones i ON c.id_curso = i.id_curso
+    LEFT JOIN 
+        alumnos a ON i.id_alumno = a.id_alumno -- Unir con la tabla de alumnos
+    GROUP BY 
+        c.id_curso;
+`;
+
+db.query(sql, (err, cursos) => {
+  if (err) return res.status(500).send(err);
+
+  const gradosSql = 'SELECT * FROM grados';
+  const profesoresSql = 'SELECT * FROM profesores';
+  const alumnosSql = 'SELECT * FROM alumnos'; // Consulta para obtener los alumnos
+
+  db.query(gradosSql, (err, grados) => {
       if (err) return res.status(500).send(err);
-
-      const gradosSql = 'SELECT * FROM grados';
-      const profesoresSql = 'SELECT * FROM profesores';
-
-      db.query(gradosSql, (err, grados) => {
+      db.query(profesoresSql, (err, profesores) => {
           if (err) return res.status(500).send(err);
-          db.query(profesoresSql, (err, profesores) => {
+          db.query(alumnosSql, (err, alumnos) => { // Consultar alumnos
               if (err) return res.status(500).send(err);
 
-              const message = req.session.message;  // Obtener el mensaje de la sesión
-              req.session.message = null;  // Limpiar el mensaje de la sesión
+              const message = req.session.message;  
+              req.session.message = null;  
 
-              res.render('cursos/index', { cursos, grados, profesores, message });  // Pasar el mensaje a la vista
+              // Pasar los cursos, grados, profesores y alumnos a la vista
+              res.render('cursos/index', { cursos, grados, profesores, alumnos, message });
           });
       });
   });
 });
-
+});
 
 // Ruta para crear un nuevo curso
 app.post('/cursos/crear', (req, res) => {
-  const { nombre_curso, descripcion, id_grado, id_profesor, estado } = req.body;
+  const { nombre_curso, descripcion, id_grado, id_profesor, estado, alumnos } = req.body; // Asegúrate de incluir `alumnos`
   const sql = 'INSERT INTO cursos (nombre_curso, descripcion, id_grado, id_profesor, estado) VALUES (?, ?, ?, ?, ?)';
-  db.query(sql, [nombre_curso, descripcion, id_grado, id_profesor, estado], (err) => {
+  
+  db.query(sql, [nombre_curso, descripcion, id_grado, id_profesor, estado], (err, result) => {
       if (err) {
           req.session.message = { type: 'danger', content: 'Error al crear el curso.' };
           return res.redirect('/cursos');
       }
+      
+      const cursoId = result.insertId; // Obtén el ID del curso recién creado
+
+      // Ahora, guarda la relación entre el curso y los alumnos
+      if (alumnos && alumnos.length > 0) {
+          const inscripcionSql = 'INSERT INTO inscripciones (id_curso, id_alumno) VALUES (?, ?)';
+          alumnos.forEach(alumnoId => {
+              db.query(inscripcionSql, [cursoId, alumnoId], (err) => {
+                  if (err) {
+                      console.error(`Error al asociar alumno ${alumnoId} con el curso:`, err);
+                  }
+              });
+          });
+      }
+
       req.session.message = { type: 'success', content: 'Curso creado exitosamente.' };
       res.redirect('/cursos');
   });
@@ -972,15 +1091,43 @@ app.post('/cursos/crear', (req, res) => {
 // Ruta para editar un curso
 app.post('/cursos/editar/:id', (req, res) => {
   const { id } = req.params;
-  const { nombre_curso, descripcion, id_grado, id_profesor, estado } = req.body;
-  const sql = 'UPDATE cursos SET nombre_curso = ?, descripcion = ?, id_grado = ?, id_profesor = ?, estado = ? WHERE id_curso = ?';
-  db.query(sql, [nombre_curso, descripcion, id_grado, id_profesor, estado, id], (err) => {
+  const { nombre_curso, descripcion, id_grado, id_profesor, estado, alumnos } = req.body;
+
+  // Actualizar los detalles del curso
+  const sqlCurso = 'UPDATE cursos SET nombre_curso = ?, descripcion = ?, id_grado = ?, id_profesor = ?, estado = ? WHERE id_curso = ?';
+  db.query(sqlCurso, [nombre_curso, descripcion, id_grado, id_profesor, estado, id], (err) => {
       if (err) {
           req.session.message = { type: 'danger', content: 'Error al editar el curso.' };
           return res.redirect('/cursos');
       }
-      req.session.message = { type: 'success', content: 'Curso editado exitosamente.' };
-      res.redirect('/cursos');
+
+      // Eliminar las inscripciones anteriores
+      const sqlEliminarInscripciones = 'DELETE FROM inscripciones WHERE id_curso = ?';
+      db.query(sqlEliminarInscripciones, [id], (err) => {
+          if (err) {
+              req.session.message = { type: 'danger', content: 'Error al eliminar inscripciones anteriores.' };
+              return res.redirect('/cursos');
+          }
+
+          // Si hay alumnos seleccionados, insertarlos en la tabla de inscripciones
+          if (alumnos) {
+              const inscripciones = Array.isArray(alumnos) ? alumnos : [alumnos];
+              const sqlInscripcion = 'INSERT INTO inscripciones (id_alumno, id_curso) VALUES ?';
+              const inscripcionesValues = inscripciones.map(id_alumno => [id_alumno, id]);
+
+              db.query(sqlInscripcion, [inscripcionesValues], (err) => {
+                  if (err) {
+                      req.session.message = { type: 'danger', content: 'Error al inscribir alumnos.' };
+                      return res.redirect('/cursos');
+                  }
+                  req.session.message = { type: 'success', content: 'Curso editado y alumnos inscritos exitosamente.' };
+                  res.redirect('/cursos');
+              });
+          } else {
+              req.session.message = { type: 'success', content: 'Curso editado sin inscribir alumnos.' };
+              res.redirect('/cursos');
+          }
+      });
   });
 });
 
@@ -998,356 +1145,1294 @@ app.post('/cursos/eliminar/:id', (req, res) => {
   });
 });
 
-//modulo horarios
+//modulo horarios 
+// Renderizar la vista de horarios
 app.get('/horarios', (req, res) => {
-  const queryHorarios = `
-        SELECT 
-            h.*, 
-            c.nombre_curso, 
-            p.nombre AS nombre_profesor,
-            IFNULL(GROUP_CONCAT(DISTINCT g.nombre_grado), 'Sin grado asignado') AS nombre_grado, 
-            IFNULL(GROUP_CONCAT(DISTINCT s.nombre_seccion), 'Sin sección asignada') AS nombre_seccion
-        FROM 
-            horarios h
-        INNER JOIN 
-            cursos c ON h.id_curso = c.id_curso
-        LEFT JOIN 
-            profesores p ON h.id_profesor = p.id_profesor
-        LEFT JOIN 
-            horario_grados hg ON h.id_horario = hg.id_horario
-        LEFT JOIN 
-            grados g ON hg.id_grado = g.id_grado
-        LEFT JOIN 
-            horario_secciones hs ON h.id_horario = hs.id_horario
-        LEFT JOIN 
-            secciones s ON hs.id_seccion = s.id_seccion
-        GROUP BY 
-            h.id_horario;
-    `;
-  const queryCursos = `SELECT * FROM cursos`;
-  const queryProfesores = `SELECT * FROM profesores`;
-  const queryGrados = `SELECT * FROM grados`;
-  const querySecciones = `SELECT * FROM secciones`;
+  const idProfesor = req.query.profesor || null;
+  let profesores = [];
+  let horarios = [];
+  let cursos = []; // Variable para cursos
+  let grados = []; // Variable para grados
+  let secciones = []; // Variable para secciones
+  let nombreProfesor = '';
+  const message = req.session.message; // Obtener mensaje de la sesión
+  req.session.message = null; // Limpiar el mensaje después de obtenerlo
 
-  // Obtener los cursos
-  db.query(queryCursos, (errorCursos, cursos) => {
-    if (errorCursos) {
-      console.error('Error al obtener los cursos:', errorCursos);
-      return res.status(500).send('Error en el servidor');
-    }
-
-    // Obtener los profesores
-    db.query(queryProfesores, (errorProfesores, profesores) => {
-      if (errorProfesores) {
-        console.error('Error al obtener los profesores:', errorProfesores);
-        return res.status(500).send('Error en el servidor');
-      }
-
-      // Obtener los grados
-      db.query(queryGrados, (errorGrados, grados) => {
-        if (errorGrados) {
-          console.error('Error al obtener los grados:', errorGrados);
-          return res.status(500).send('Error en el servidor');
-        }
-
-        // Obtener las secciones
-        db.query(querySecciones, (errorSecciones, secciones) => {
-          if (errorSecciones) {
-            console.error('Error al obtener las secciones:', errorSecciones);
-            return res.status(500).send('Error en el servidor');
-          }
-
-          // Obtener los horarios
-          db.query(queryHorarios, (errorHorarios, horarios) => {
-            if (errorHorarios) {
-              console.error('Error al obtener los horarios:', errorHorarios);
-              return res.status(500).send('Error en el servidor');
-            }
-
-            // Renderizar la vista con los datos obtenidos
-            res.render('horarios/index', {
-              horarios,
-              cursos,
-              profesores,
-              grados,
-              secciones
-            });
-          });
-        });
-      });
-    });
-  });
-});
-
-
-// Ruta para mostrar el formulario de agregar un nuevo horario
-app.get('/horarios/agregar', (req, res) => {
-  const queryCursos = `SELECT * FROM cursos`;
-  const queryProfesores = `SELECT * FROM profesores`;
-  const queryGrados = `SELECT * FROM grados`; // Consulta para grados
-  const querySecciones = `SELECT * FROM secciones`; // Consulta para secciones
-
-  // Ejecutar la consulta de cursos
-  db.query(queryCursos, (errorCursos, cursos) => {
-    if (errorCursos) {
-      console.error('Error al obtener los cursos:', errorCursos);
-      return res.status(500).send('Error al obtener los cursos');
-    }
-
-    // Ejecutar la consulta de profesores
-    db.query(queryProfesores, (errorProfesores, profesores) => {
-      if (errorProfesores) {
-        console.error('Error al obtener los profesores:', errorProfesores);
-        return res.status(500).send('Error al obtener los profesores');
-      }
-
-      // Ejecutar la consulta de grados
-      db.query(queryGrados, (errorGrados, grados) => {
-        if (errorGrados) {
-          console.error('Error al obtener los grados:', errorGrados);
-          return res.status(500).send('Error al obtener los grados');
-        }
-
-        // Ejecutar la consulta de secciones
-        db.query(querySecciones, (errorSecciones, secciones) => {
-          if (errorSecciones) {
-            console.error('Error al obtener las secciones:', errorSecciones);
-            return res.status(500).send('Error al obtener las secciones');
-          }
-
-          // Renderizar la vista 'agregar' con los datos obtenidos
-          res.render('horarios/agregar', {
-            cursos,
-            profesores,
-            grados,
-            secciones
-          });
-        });
-      });
-    });
-  });
-});
-
-// Ruta para agregar un nuevo horario
-app.post('/horarios/agregar', (req, res) => {
-  const { id_curso, dia_semana, hora_inicio, hora_fin, id_profesor, grados, secciones } = req.body;
-
-  db.query('INSERT INTO horarios (id_curso, dia_semana, hora_inicio, hora_fin, id_profesor) VALUES (?, ?, ?, ?, ?)', 
-  [id_curso, dia_semana, hora_inicio, hora_fin, id_profesor], 
-  (error, results) => {
+  // Obtener lista de profesores
+  db.query('SELECT id_profesor, nombre FROM profesores', (error, profesoresRows) => {
     if (error) {
-      console.error('Error al agregar el horario:', error);
-      return res.status(500).send('Error en el servidor');
+      console.error('Error al obtener la lista de profesores:', error);
+      return res.status(500).send('Error al obtener la lista de profesores');
     }
 
-    const id_horario = results.insertId; // Obtener el ID del nuevo horario
+    profesores = Array.isArray(profesoresRows) ? profesoresRows : [];
+    console.log('Profesores:', profesores);
 
-    // Insertar grados asociados
-    const gradoValues = (grados || []).map(grado => [id_horario, grado]);
-    if (gradoValues.length > 0) {
-      db.query('INSERT INTO horario_grados (id_horario, id_grado) VALUES ?', [gradoValues], (err) => {
-        if (err) {
-          console.error('Error al agregar grados:', err);
-          return res.status(500).send('Error al agregar grados');
+    // Consulta para obtener los cursos
+    db.query('SELECT * FROM cursos', (error, cursosRows) => {
+      if (error) {
+        console.error('Error al obtener la lista de cursos:', error);
+        return res.status(500).send('Error al obtener la lista de cursos');
+      }
+
+      cursos = Array.isArray(cursosRows) ? cursosRows : [];
+      console.log('Cursos:', cursos);
+
+      // Consulta para obtener los grados
+      db.query('SELECT * FROM grados', (error, gradosRows) => {
+        if (error) {
+          console.error('Error al obtener la lista de grados:', error);
+          return res.status(500).send('Error al obtener la lista de grados');
         }
-      });
-    }
 
-    // Insertar secciones asociadas
-    const seccionValues = (secciones || []).map(seccion => [id_horario, seccion]);
-    if (seccionValues.length > 0) {
-      db.query('INSERT INTO horario_secciones (id_horario, id_seccion) VALUES ?', [seccionValues], (err) => {
-        if (err) {
-          console.error('Error al agregar secciones:', err);
-          return res.status(500).send('Error al agregar secciones');
-        }
-        res.redirect('/horarios'); // Redirigir a la lista de horarios después de agregar
+        grados = Array.isArray(gradosRows) ? gradosRows : [];
+        console.log('Grados:', grados);
+
+        // Consulta para obtener solo las secciones A, B, C y D usando sus id_seccion
+        db.query('SELECT * FROM secciones WHERE id_seccion IN (153, 154, 155, 233)', (error, seccionesRows) => {
+          if (error) {
+            console.error('Error al obtener la lista de secciones:', error);
+            return res.status(500).send('Error al obtener la lista de secciones');
+          }
+
+          secciones = Array.isArray(seccionesRows) ? seccionesRows : [];
+          console.log('Secciones:', secciones);
+
+          if (idProfesor) {
+            db.query(`SELECT h.*, c.nombre_curso, g.nombre_grado, s.nombre_seccion 
+              FROM horarios h 
+              JOIN cursos c ON h.id_curso = c.id_curso 
+              JOIN grados g ON h.id_grado = g.id_grado 
+              JOIN secciones s ON h.id_seccion = s.id_seccion 
+              WHERE h.id_profesor = ? AND h.id_seccion IN (153, 154, 155, 233)`, [idProfesor], (error, horariosRows) => {
+              if (error) {
+                console.error('Error al obtener los horarios:', error);
+                return res.status(500).send('Error al obtener los horarios');
+              }
+
+              horarios = Array.isArray(horariosRows) ? horariosRows : [];
+              console.log('Horarios:', horarios);
+
+              // Obtener nombre del profesor
+              db.query('SELECT nombre FROM profesores WHERE id_profesor = ?', [idProfesor], (error, profesorRows) => {
+                if (error) {
+                  console.error('Error al obtener el nombre del profesor:', error);
+                } else {
+                  nombreProfesor = profesorRows.length > 0 ? profesorRows[0].nombre : '';
+                }
+
+                // Renderizar la vista con los datos obtenidos
+                res.render('horarios/index', { profesores, horarios, cursos, grados, secciones, idProfesor, nombreProfesor, message });
+              });
+            });
+          } else {
+            // Renderizar la vista sin horarios
+            res.render('horarios/index', { profesores, horarios, cursos, grados, secciones, idProfesor, nombreProfesor, message });
+          }
+        });
       });
-    } else {
-      res.redirect('/horarios'); // Si no hay secciones, redirigir de todos modos
-    }
+    });
   });
 });
 
-app.post('/horarios/editar', (req, res) => {
-  const { id_horario, id_curso, dia_semana, hora_inicio, hora_fin, id_profesor, edit_grados, edit_secciones } = req.body;
 
-  const sql = `
-      UPDATE horarios
-      SET id_curso = ?, dia_semana = ?, hora_inicio = ?, hora_fin = ?, id_profesor = ?
-      WHERE id_horario = ?
-  `;
+// Agregar un nuevo horario
+app.post('/horarios/agregar', async (req, res) => {
+  const { dia_semana, hora_inicio, hora_fin, id_curso, id_grado, id_seccion, id_profesor } = req.body;
 
-  db.query(sql, [id_curso, dia_semana, hora_inicio, hora_fin, id_profesor, id_horario], (err) => {
+  try {
+      await db.query('INSERT INTO horarios (dia_semana, hora_inicio, hora_fin, id_curso, id_grado, id_seccion, id_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+          [dia_semana, hora_inicio, hora_fin, id_curso, id_grado, id_seccion, id_profesor]
+      );
+      req.session.message = { type: 'success', content: 'Horario agregado exitosamente.' };
+  } catch (error) {
+      console.error('Error al agregar el horario:', error);
+      req.session.message = { type: 'danger', content: 'Error al agregar el horario.' };
+  }
+
+  res.redirect('/horarios?profesor=' + id_profesor);
+});
+
+app.post('/horarios/editar/:id', (req, res) => {
+  const idHorario = req.params.id;
+  const { dia_semana, hora_inicio, hora_fin, id_curso, id_grado, id_seccion, id_profesor } = req.body;
+
+  db.query('UPDATE horarios SET dia_semana = ?, hora_inicio = ?, hora_fin = ?, id_curso = ?, id_grado = ?, id_seccion = ?, id_profesor = ? WHERE id_horario = ?', 
+      [dia_semana, hora_inicio, hora_fin, id_curso, id_grado, id_seccion, id_profesor, idHorario], (error, results) => {
+      if (error) {
+          console.error('Error al actualizar el horario:', error);
+          req.session.message = { type: 'danger', content: 'Error al actualizar el horario.' };
+          return res.redirect('/horarios?profesor=' + id_profesor);
+      }
+
+      req.session.message = { type: 'success', content: 'Horario actualizado exitosamente.' };
+      res.redirect('/horarios?profesor=' + id_profesor);
+  });
+});
+
+app.post('/horarios/eliminar/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.query('SELECT id_profesor FROM horarios WHERE id_horario = ?', [id], (err, results) => {
+      if (err) {
+          console.error('Error al obtener el horario:', err);
+          req.session.message = { type: 'danger', content: 'Error al obtener el horario.' };
+          return res.redirect('/horarios');
+      }
+
+      if (results.length > 0) {
+          const horario = results[0];
+
+          db.query('DELETE FROM horarios WHERE id_horario = ?', [id], (err, result) => {
+              if (err) {
+                  console.error('Error al eliminar el horario:', err);
+                  req.session.message = { type: 'danger', content: 'Error al eliminar el horario.' };
+                  return res.redirect('/horarios?profesor=' + horario.id_profesor);
+              }
+
+              req.session.message = { type: 'success', content: 'Horario eliminado exitosamente.' };
+              res.redirect(`/horarios?profesor=${horario.id_profesor}`);
+          });
+      } else {
+          req.session.message = { type: 'danger', content: 'Horario no encontrado.' };
+          res.redirect('/horarios');
+      }
+  });
+});
+
+//modulo de asistencias
+// Ruta para obtener la página de asistencias
+app.get('/asistencias', (req, res) => {
+  console.log("Solicitando la página de asistencias...");
+  // Ejecutar la consulta SQL para obtener los profesores
+  db.query('SELECT * FROM profesores', (error, profesores) => {
+      if (error) {
+          console.error("Error al obtener los profesores:", error);
+          return res.status(500).send('Error al obtener los profesores');
+      }
+      console.log("Profesores obtenidos:", profesores);
+      // Renderizar la vista con los datos de profesores
+      res.render('asistencias/index', { profesores });
+  });
+});
+
+// Ruta para registrar asistencia
+// Ruta para registrar asistencia
+app.post('/asistencias/registrar', (req, res) => {
+  const { fecha, asistencia } = req.body;
+
+  if (!fecha || !asistencia || asistencia.length === 0) {
+      req.session.message = { type: 'danger', content: 'Datos de asistencia inválidos.' };
+      return res.redirect('/asistencias');
+  }
+
+  const query = 'INSERT INTO asistencias (id_profesor, estado, fecha) VALUES ?';
+  const values = asistencia.map(item => [item.idProfesor, item.estado, fecha]);
+
+  console.log("Valores para insertar:", values); // Debugging line
+
+  db.query(query, [values], (error, results) => {
+      if (error) {
+          console.error('Error al registrar la asistencia:', error);
+          req.session.message = { type: 'danger', content: 'Error al registrar la asistencia.' };
+          return res.redirect('/asistencias');
+      }
+
+      console.log("Resultado de la inserción:", results); // Verifica que tenga filas afectadas
+      req.session.message = { type: 'success', content: 'Asistencia registrada con éxito.' };
+      res.redirect('/asistencias');
+  });
+});
+
+
+//modulo de periodos escolares
+// Ruta para obtener todos los períodos
+app.get('/periodos', (req, res) => {
+  db.query('SELECT * FROM periodos_escolares', (err, resultados) => {
+      if (err) throw err;
+      res.render('periodos/index', { periodos: resultados, session: req.session }); // Pasa la sesión a la vista
+  });
+});
+
+// Ruta para crear un nuevo período
+app.post('/periodos/crear', (req, res) => {
+  const { nombre_periodo, fecha_inicio, fecha_fin, estado } = req.body;
+  const sql = 'INSERT INTO periodos_escolares (nombre_periodo, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?)';
+  
+  db.query(sql, [nombre_periodo, fecha_inicio, fecha_fin, estado], (err) => {
+    if (err) {
+      req.session.message = { type: 'error', content: 'Error al crear el período escolar.' };
+      return res.redirect('/periodos');
+    }
+    req.session.message = { type: 'success', content: 'Período escolar creado exitosamente.' };
+    res.redirect('/periodos');
+  });
+});
+
+
+// Ruta para editar un período (cargar el formulario)
+app.get('/periodos/editar/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('SELECT * FROM periodos_escolares WHERE id_periodo = ?', [id], (err, resultados) => {
+      if (err) throw err;
+      res.render('periodos/editar', { periodo: resultados[0] });
+  });
+});
+
+// Ruta para actualizar un período
+// Ruta para actualizar un período
+app.post('/periodos/editar/:id', (req, res) => {
+  const { id } = req.params;
+  const { nombre_periodo, fecha_inicio, fecha_fin, estado } = req.body;
+  const sql = 'UPDATE periodos_escolares SET nombre_periodo = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id_periodo = ?';
+
+  db.query(sql, [nombre_periodo, fecha_inicio, fecha_fin, estado, id], (err) => {
+    if (err) {
+      req.session.message = { type: 'error', content: 'Error al actualizar el período escolar.' };
+      return res.redirect('/periodos');
+    }
+    req.session.message = { type: 'success', content: 'Período escolar actualizado exitosamente.' };
+    res.redirect('/periodos');
+  });
+});
+
+// Ruta para eliminar un período
+// Ruta para eliminar un período
+app.post('/periodos/eliminar/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = 'DELETE FROM periodos_escolares WHERE id_periodo = ?';
+
+  db.query(sql, [id], (err) => {
+    if (err) {
+      req.session.message = { type: 'error', content: 'Error al eliminar el período escolar.' };
+      return res.redirect('/periodos');
+    }
+    req.session.message = { type: 'success', content: 'Período escolar eliminado exitosamente.' };
+    res.redirect('/periodos');
+  });
+});
+
+
+// Ruta para migrar datos de un período a otro
+app.post('/periodos/migrar', (req, res) => {
+  const { id_periodo_origen, id_periodo_destino } = req.body;
+
+  // Función para ejecutar una consulta y manejar errores
+  const executeQuery = (query, params) => {
+      return new Promise((resolve, reject) => {
+          db.query(query, params, (err, result) => {
+              if (err) return reject(err);
+              resolve(result);
+          });
+      });
+  };
+
+  // Migrar alumnos
+  const migrateAlumnos = () => {
+      const sqlAlumnos = `
+          INSERT INTO alumnos 
+          (nombre, apellido, fecha_nacimiento, email, telefono, seccion, estado, id_grado, nombre_padre, telefono_padre, correo_padre, nombre_madre, telefono_madre, correo_madre, id_periodo) 
+          SELECT nombre, apellido, fecha_nacimiento, email, telefono, seccion, estado, id_grado, nombre_padre, telefono_padre, correo_padre, nombre_madre, telefono_madre, correo_madre, ? 
+          FROM alumnos WHERE id_periodo = ?`;
+      return executeQuery(sqlAlumnos, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar asistencias
+  const migrateAsistencias = () => {
+      const sqlAsistencias = `
+          INSERT INTO asistencias 
+          (id_profesor, fecha, estado, id_periodo) 
+          SELECT id_profesor, fecha, estado, ? 
+          FROM asistencias WHERE id_periodo = ?`;
+      return executeQuery(sqlAsistencias, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar cursos
+  const migrateCursos = () => {
+      const sqlCursos = `
+          INSERT INTO cursos 
+          (nombre_curso, descripcion, id_grado, id_profesor, estado, id_periodo) 
+          SELECT nombre_curso, descripcion, id_grado, id_profesor, estado, ? 
+          FROM cursos WHERE id_periodo = ?`;
+      return executeQuery(sqlCursos, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar grados
+  const migrateGrados = () => {
+      const sqlGrados = `
+          INSERT INTO grados 
+          (nombre_grado, nivel_academico, id_periodo) 
+          SELECT nombre_grado, nivel_academico, ? 
+          FROM grados WHERE id_periodo = ?`;
+      return executeQuery(sqlGrados, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar horarios
+  const migrateHorarios = () => {
+      const sqlHorarios = `
+          INSERT INTO horarios 
+          (id_curso, dia_semana, hora_inicio, hora_fin, id_profesor, id_grado, id_seccion, id_periodo) 
+          SELECT id_curso, dia_semana, hora_inicio, hora_fin, id_profesor, id_grado, id_seccion, ? 
+          FROM horarios WHERE id_periodo = ?`;
+      return executeQuery(sqlHorarios, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar inscripciones
+  const migrateInscripciones = () => {
+      const sqlInscripciones = `
+          INSERT INTO inscripciones 
+          (id_alumno, id_curso, id_periodo) 
+          SELECT id_alumno, id_curso, ? 
+          FROM inscripciones WHERE id_periodo = ?`;
+      return executeQuery(sqlInscripciones, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar pagos
+  const migratePagos = () => {
+      const sqlPagos = `
+          INSERT INTO pagos 
+          (fecha_pago, monto, id_estudiante, id_usuario, id_periodo) 
+          SELECT fecha_pago, monto, id_estudiante, id_usuario, ? 
+          FROM pagos WHERE id_periodo = ?`;
+      return executeQuery(sqlPagos, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar recibos
+  const migrateRecibos = () => {
+      const sqlRecibos = `
+          INSERT INTO recibos 
+          (fecha_emision, monto, id_estudiante, id_usuario, id_periodo) 
+          SELECT fecha_emision, monto, id_estudiante, id_usuario, ? 
+          FROM recibos WHERE id_periodo = ?`;
+      return executeQuery(sqlRecibos, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar reportes
+  const migrateReportes = () => {
+      const sqlReportes = `
+          INSERT INTO reportes 
+          (tipo_reporte, fecha_generacion, contenido, id_usuario, id_periodo) 
+          SELECT tipo_reporte, fecha_generacion, contenido, id_usuario, ? 
+          FROM reportes WHERE id_periodo = ?`;
+      return executeQuery(sqlReportes, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar roles
+  const migrateRoles = () => {
+    const sqlRoles = `
+        INSERT INTO roles 
+        (nombre_rol, id_periodo) 
+        SELECT nombre_rol, ? 
+        FROM roles WHERE id_periodo = ?`;
+    return executeQuery(sqlRoles, [id_periodo_destino, id_periodo_origen]); // Cambiar id_periodo para el nuevo periodo
+};
+
+
+  // Migrar secciones
+  const migrateSecciones = () => {
+      const sqlSecciones = `
+          INSERT INTO secciones 
+          (id_grado, nombre_seccion, id_periodo) 
+          SELECT id_grado, nombre_seccion, ? 
+          FROM secciones WHERE id_periodo = ?`;
+      return executeQuery(sqlSecciones, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Migrar usuarios
+  const migrateUsuarios = () => {
+      const sqlUsuarios = `
+          INSERT INTO usuarios 
+          (nombre_usuario, email, contraseña, estado, id_rol, telefono, direccion, fecha_nacimiento, genero, foto, id_periodo) 
+          SELECT nombre_usuario, email, contraseña, estado, id_rol, telefono, direccion, fecha_nacimiento, genero, foto, ? 
+          FROM usuarios WHERE id_periodo = ?`;
+      return executeQuery(sqlUsuarios, [id_periodo_destino, id_periodo_origen]);
+  };
+
+  // Ejecutar todas las migraciones en secuencia
+  const migrateAll = async () => {
+      try {
+          await migrateAlumnos();
+          await migrateAsistencias();
+          await migrateCursos();
+          await migrateGrados();
+          await migrateHorarios();
+          await migrateInscripciones();
+          await migratePagos();
+          await migrateRecibos();
+          await migrateReportes();
+          await migrateRoles();
+          await migrateSecciones();
+          await migrateUsuarios();
+          
+          req.session.message = { type: 'success', content: 'Datos migrados exitosamente.' };
+          res.redirect('/periodos');
+        } catch (error) {
+          console.error('Error migrando datos:', error);
+          req.session.message = { type: 'error', content: 'Error al migrar los datos.' };
+          res.redirect('/periodos');
+        }
+      };
+
+  migrateAll();
+});
+
+//modulo control de pagos
+
+// Ruta para pagos
+// Ruta para pagos
+// Ruta para pagos
+app.get('/pagos', (req, res) => {
+  // Consulta para obtener recibos y los nombres de los alumnos
+  db.query(`
+      SELECT r.id_recibo, r.numero_recibo, r.monto, r.estado, r.fecha_emision, r.fecha_pago, r.descripcion, 
+             a.nombre AS nombre_alumno, 
+             MONTH(r.fecha_emision) AS mes  -- Asegúrate de que esto obtenga el mes de la fecha de emisión
+      FROM control r
+      JOIN alumnos a ON r.id_alumno = a.id_alumno
+  `, (err, recibos) => {
       if (err) {
           console.error(err);
-          return res.status(500).send('Error al actualizar el horario');
+          return res.status(500).send(err);
       }
 
-      // Eliminar asociaciones existentes
-      db.query('DELETE FROM horario_grados WHERE id_horario = ?', [id_horario], (err) => {
+      // Obtener la lista de alumnos para el formulario
+      db.query(`SELECT id_alumno, nombre FROM alumnos`, (err, alumnos) => {
           if (err) {
-              console.error('Error al eliminar asociaciones de grados:', err);
-              return res.status(500).send('Error al eliminar asociaciones de grados');
+              console.error(err);
+              return res.status(500).send(err);
+          }
+          // Renderiza la vista con los recibos, la lista de alumnos y el arreglo de meses
+          res.render('pagos/index', { recibos, alumnos, meses }); // Agregamos `meses`
+      });
+  });
+});
+
+
+// Ruta para crear un recibo
+// Ruta para crear un recibo
+// Definir un arreglo con los nombres de los meses
+const meses = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+// Ruta para crear un recibo
+app.post('/recibos/crear', (req, res) => {
+  console.log('Datos recibidos:', req.body);
+  const { numero_recibo, monto, estado, descripcion, id_alumno, fecha_pago } = req.body;
+
+  // Obtener el nombre del mes actual
+  const mes = meses[new Date().getMonth()]; // Obtener el nombre del mes
+
+  // Inserta el recibo en la base de datos
+  const queryInsert = `
+      INSERT INTO control (numero_recibo, monto, estado, descripcion, fecha_emision, fecha_pago, id_alumno, mes) 
+      VALUES (?, ?, ?, ?, NOW(), ?, ?, ?)
+  `;
+
+  const values = [numero_recibo, monto, estado, descripcion, fecha_pago || null, id_alumno, mes];
+
+  db.query(queryInsert, values, (err, result) => {
+      if (err) {
+          console.error('Error al crear recibo:', err);
+          return res.status(500).send('Error al crear el recibo');
+      }
+
+      // Después de insertar, hacemos una consulta para obtener los datos completos del recibo recién creado
+      const id_recibo = result.insertId;
+      const querySelect = `
+          SELECT r.*, a.nombre AS nombre_alumno
+          FROM control r
+          JOIN alumnos a ON r.id_alumno = a.id_alumno
+          WHERE r.id_recibo = ?
+      `;
+      db.query(querySelect, [id_recibo], (err, rows) => {
+          if (err) {
+              console.error('Error al obtener el recibo creado:', err);
+              return res.status(500).send('Error al obtener el recibo creado');
           }
 
-          db.query('DELETE FROM horario_secciones WHERE id_horario = ?', [id_horario], (err) => {
-              if (err) {
-                  console.error('Error al eliminar asociaciones de secciones:', err);
-                  return res.status(500).send('Error al eliminar asociaciones de secciones');
-              }
-
-              // Insertar nuevas asociaciones de grados
-              const gradoValues = (edit_grados || []).map(grado => [id_horario, grado]);
-              if (gradoValues.length > 0) {
-                  db.query('INSERT INTO horario_grados (id_horario, id_grado) VALUES ?', [gradoValues], (err) => {
-                      if (err) {
-                          console.error('Error al agregar nuevos grados:', err);
-                          return res.status(500).send('Error al agregar nuevos grados');
-                      }
-                  });
-              }
-
-              // Insertar nuevas asociaciones de secciones
-              const seccionValues = (edit_secciones || []).map(seccion => [id_horario, seccion]);
-              if (seccionValues.length > 0) {
-                  db.query('INSERT INTO horario_secciones (id_horario, id_seccion) VALUES ?', [seccionValues], (err) => {
-                      if (err) {
-                          console.error('Error al agregar nuevas secciones:', err);
-                          return res.status(500).send('Error al agregar nuevas secciones');
-                      }
-                      return res.redirect('/horarios'); // Redirigir a la lista de horarios después de la actualización
-                  });
-              } else {
-                  return res.redirect('/horarios'); // Si no hay secciones, redirigir de todos modos
-              }
+          // Devuelve los datos completos del recibo creado
+          res.send({
+              message: 'Recibo creado exitosamente',
+              recibo: rows[0]  // Esto contiene todos los datos del recibo
           });
       });
   });
 });
 
-// Eliminar horario
-app.get('/horarios/eliminar/:id', function (req, res) {
-  var idHorario = req.params.id;
+// Ruta para editar un recibo
+// Ruta para editar un recibo
+app.post('/recibos/editar', (req, res) => {
+  console.log('Datos recibidos para editar:', req.body);
+  const { id_recibo, numero_recibo, monto, estado, descripcion, id_alumno, fecha_pago } = req.body;
 
-  // Eliminar las relaciones dependientes en la tabla horario_secciones
-  var deleteSeccionesQuery = 'DELETE FROM horario_secciones WHERE id_horario = ?';
-  db.query(deleteSeccionesQuery, [idHorario], function (error, results) {
-      if (error) {
-          console.log('Error al eliminar registros en horario_secciones:', error);
-          return res.redirect('/horarios'); // Redirigir en caso de error
+  // Calcula el nombre del mes a partir de la fecha de pago
+  const mes = meses[new Date(fecha_pago).getMonth()]; // Obtener el nombre del mes
+
+  // Actualiza el recibo en la base de datos
+  const queryUpdate = `
+      UPDATE control 
+      SET numero_recibo = ?, monto = ?, estado = ?, descripcion = ?, fecha_pago = ?, id_alumno = ?, mes = ?
+      WHERE id_recibo = ?
+  `;
+
+  const values = [numero_recibo, monto, estado, descripcion, fecha_pago || null, id_alumno, mes, id_recibo];
+
+  db.query(queryUpdate, values, (err, result) => {
+      if (err) {
+          console.error('Error al editar el recibo:', err);
+          return res.status(500).send('Error al editar el recibo');
       }
 
-      // Luego eliminar el horario en la tabla principal
-      var deleteHorarioQuery = 'DELETE FROM horarios WHERE id_horario = ?';
-      db.query(deleteHorarioQuery, [idHorario], function (error, results) {
-          if (error) {
-              console.log('Error al eliminar el horario:', error);
-              return res.redirect('/horarios'); // Redirigir en caso de error
+      if (result.affectedRows === 0) {
+          return res.status(404).send('Recibo no encontrado');
+      }
+
+      // Después de actualizar, hacemos una consulta para obtener los datos actualizados del recibo
+      const querySelect = `
+          SELECT r.*, a.nombre AS nombre_alumno
+          FROM control r
+          JOIN alumnos a ON r.id_alumno = a.id_alumno
+          WHERE r.id_recibo = ?
+      `;
+      db.query(querySelect, [id_recibo], (err, rows) => {
+          if (err) {
+              console.error('Error al obtener el recibo editado:', err);
+              return res.status(500).send('Error al obtener el recibo editado');
           }
 
-          console.log('Horario eliminado correctamente:', idHorario);
-          return res.redirect('/horarios'); // Redirigir después de eliminar
+          if (rows.length === 0) {
+              return res.status(404).send('Recibo no encontrado');
+          }
+
+          // Devuelve los datos actualizados del recibo
+          res.send({
+              message: 'Recibo editado exitosamente',
+              recibo: rows[0]
+          });
+      });
+  });
+});
+
+// Ruta para obtener un recibo por ID
+app.get('/recibos/:id', (req, res) => {
+  const id_recibo = req.params.id;
+
+  const querySelect = `
+      SELECT r.*, a.nombre AS nombre_alumno
+      FROM control r
+      JOIN alumnos a ON r.id_alumno = a.id_alumno
+      WHERE r.id_recibo = ?
+  `;
+  db.query(querySelect, [id_recibo], (err, rows) => {
+      if (err) {
+          console.error('Error al obtener el recibo:', err);
+          return res.status(500).send('Error al obtener el recibo');
+      }
+      if (rows.length === 0) {
+          console.log('No se encontró ningún recibo con ID:', id_recibo);
+          return res.status(404).send('Recibo no encontrado');
+      }
+
+      console.log('Recibo encontrado:', rows[0]); // Agregado para ver la respuesta
+      res.send({
+          recibo: rows[0]
+      });
+  });
+});
+// Ruta para eliminar un recibo
+app.delete('/recibos/:id_recibo', (req, res) => {
+  const id_recibo = req.params.id_recibo;
+
+  // Lógica para eliminar el recibo de la base de datos
+  db.query('DELETE FROM control WHERE id_recibo = ?', [id_recibo], (error, results) => {
+      if (error) {
+          return res.status(500).json({ success: false, message: 'Error al eliminar el recibo.' });
+      }
+      res.json({ success: true });
+  });
+});
+
+
+
+
+//modulo de configuracion
+// Obtener datos del usuario
+app.get('/obtener-datos-usuario', (req, res) => {
+  const usuarioId = req.session.user.id_usuario; // Asegúrate de que esta es la clave correcta en la sesión
+
+  if (!usuarioId) {
+      return res.status(401).json({ error: 'No estás autenticado' });
+  }
+
+  const query = 'SELECT nombre_usuario, email, telefono, direccion, genero FROM usuarios WHERE id_usuario = ?';
+  
+  db.query(query, [usuarioId], (err, results) => {
+      if (err) {
+          console.error('Error en la consulta:', err);
+          return res.status(500).json({ error: 'Error al obtener datos' });
+      }
+      if (results.length === 0) {
+          return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+      res.json(results[0]); // Envía los datos del usuario
+  });
+});
+
+// Actualizar datos del usuario
+app.post('/actualizar-datos-usuario', async (req, res) => {
+  const { nombre_usuario, email, telefono, direccion, genero, nueva_contrasena } = req.body;
+  const usuarioId = req.session.user.id_usuario; // Debe coincidir con el método anterior
+  
+  // Verificar si hay un usuario autenticado
+  if (!usuarioId) {
+      return res.status(401).json({ error: 'No estás autenticado' });
+  }
+
+  // Actualización de datos generales del usuario
+  let query = 'UPDATE usuarios SET nombre_usuario = ?, email = ?, telefono = ?, direccion = ?, genero = ? WHERE id_usuario = ?';
+  const values = [nombre_usuario, email, telefono, direccion, genero, usuarioId];
+
+  try {
+      // Si se proporcionó una nueva contraseña, actualízala también
+      if (nueva_contrasena) {
+          const hashedPassword = await bcrypt.hash(nueva_contrasena, 10); // Hashea la nueva contraseña
+          query = 'UPDATE usuarios SET nombre_usuario = ?, email = ?, telefono = ?, direccion = ?, genero = ?, contraseña = ? WHERE id_usuario = ?';
+          values.splice(5, 0, hashedPassword); // Insertar la contraseña hasheada antes del ID de usuario
+      }
+
+      // Ejecutar la consulta para actualizar los datos
+      db.query(query, values, (err) => {
+          if (err) {
+              console.error('Error al actualizar datos:', err);
+              return res.status(500).json({ error: 'Error al actualizar datos' });
+          }
+          res.json({ message: 'Datos actualizados correctamente' });
+      });
+  } catch (error) {
+      console.error('Error al hashear la contraseña:', error);
+      return res.status(500).json({ error: 'Error al procesar la solicitud' });
+  }
+});
+
+//guardar datos
+// Guardar datos
+app.post('/guardar-configuracion', async (req, res) => {
+  const { nombre_usuario, email, telefono, direccion, genero, nueva_contrasena } = req.body; // Cambia `nombre` a `nombre_usuario`
+  const usuarioId = req.session.user.id_usuario;
+
+  if (!usuarioId) {
+      return res.status(401).json({ error: 'No estás autenticado' });
+  }
+
+  let query = 'UPDATE usuarios SET nombre_usuario = ?, email = ?, telefono = ?, direccion = ?, genero = ? WHERE id_usuario = ?';
+  let values = [nombre_usuario, email, telefono, direccion, genero, usuarioId]; // Asegúrate de que coincida con el nombre
+
+  try {
+      // Si el usuario desea cambiar la contraseña, se debe actualizar el hash de la contraseña
+      if (nueva_contrasena && nueva_contrasena.trim() !== '') {
+          const hashedPassword = await bcrypt.hash(nueva_contrasena, 10);
+          query = 'UPDATE usuarios SET nombre_usuario = ?, email = ?, telefono = ?, direccion = ?, genero = ?, contraseña = ? WHERE id_usuario = ?';
+          values.splice(5, 0, hashedPassword); // Inserta el hash de la contraseña en la posición correcta
+      }
+
+      // Ejecutar la consulta
+      db.query(query, values, (err, result) => {
+          if (err) {
+              console.error('Error al guardar la configuración:', err);
+              return res.status(500).json({ error: 'Error al guardar la configuración' });
+          }
+
+          // Actualiza los datos del usuario en la sesión
+          req.session.user.nombre_usuario = nombre_usuario; // Cambia `nombre` a `nombre_usuario`
+          req.session.user.email = email;
+          req.session.user.telefono = telefono;
+          req.session.user.direccion = direccion;
+          req.session.user.genero = genero;
+
+          // Si la contraseña se cambió, asegúrate de no almacenarla en la sesión
+          if (nueva_contrasena && nueva_contrasena.trim() !== '') {
+              req.session.user.contraseña = hashedPassword; // Actualiza la contraseña en la sesión si es necesario
+          }
+
+          // Devolver la respuesta exitosa
+          res.json({ message: 'Configuración guardada correctamente' });
+      });
+  } catch (error) {
+      console.error('Error al procesar la solicitud:', error);
+      return res.status(500).json({ error: 'Error al procesar la solicitud' });
+  }
+});
+
+
+// Ruta para mostrar la página de reportes
+// Ruta para mostrar la página de reportes
+app.get('/reportes', (req, res) => {
+  const reportesQuery = 'SELECT * FROM reportes ORDER BY id_reporte ASC, fecha_generacion DESC';
+  const usuariosQuery = 'SELECT id_usuario, nombre_usuario FROM usuarios'; // Consulta para usuarios
+  const periodosQuery = 'SELECT id_periodo, nombre_periodo FROM periodos_escolares'; // Consulta para periodos
+
+  // Obtener reportes
+  db.query(reportesQuery, (errorReportes, resultadosReportes) => {
+      if (errorReportes) {
+          console.error('Error al obtener los reportes:', errorReportes);
+          return res.status(500).send('Error al obtener los reportes');
+      }
+
+      // Obtener usuarios
+      db.query(usuariosQuery, (errorUsuarios, resultadosUsuarios) => {
+          if (errorUsuarios) {
+              console.error('Error al obtener los usuarios:', errorUsuarios);
+              return res.status(500).send('Error al obtener los usuarios');
+          }
+
+          // Obtener periodos
+          db.query(periodosQuery, (errorPeriodos, resultadosPeriodos) => {
+              if (errorPeriodos) {
+                  console.error('Error al obtener los periodos:', errorPeriodos);
+                  return res.status(500).send('Error al obtener los periodos');
+              }
+
+              // Renderizar la vista con reportes, usuarios y periodos
+              res.render('reportes/index', { 
+                  reportes: resultadosReportes, 
+                  usuarios: resultadosUsuarios, 
+                  periodos: resultadosPeriodos 
+              });
+          });
+      });
+  });
+});
+
+
+// Ruta para generar un nuevo reporte
+app.post('/reportes/generar', (req, res) => {
+  const { estado_pago, id_usuario, id_periodo, tipo_reporte } = req.body; // Incluye tipo_reporte
+  
+  console.log('Datos recibidos para generar reporte:', req.body); // Para depuración
+  
+  // Validación del estado de pago
+  const estadosValidos = ['pagado', 'pendiente', 'todos'];
+  if (!estadosValidos.includes(estado_pago)) {
+    return res.status(400).json({ error: 'Estado de pago no válido' });
+  }
+  
+  // Mapeo de tipo_reporte a nombre completo
+  const tipoReportes = {
+    estudiantes_activos: "Reporte de Estudiantes Activos",
+    estudiantes_inactivos: "Reporte de Estudiantes Inactivos",
+    asistencia_fechas: "Reporte de Asistencia por Fechas",
+    profesores_activos: "Reporte de Profesores Activos",
+    profesores_inactivos: "Reporte de Profesores Inactivos",
+    pagos: "Reporte de Pagos",
+  };
+
+  const fechaGeneracion = new Date();
+
+  db.query(
+      'INSERT INTO reportes (tipo_reporte, estado_pago, fecha_generacion, id_usuario, id_periodo) VALUES (?, ?, ?, ?, ?)', 
+      [tipoReportes[tipo_reporte], estado_pago, fechaGeneracion, id_usuario, id_periodo], 
+      (err, result) => {
+          if (err) {
+              console.error('Error al generar el reporte:', err);
+              return res.status(500).json({ error: 'Error al generar el reporte' });
+          }
+          res.status(201).json({ message: 'Reporte generado exitosamente', id_reporte: result.insertId });
+      }
+  );
+});
+
+// Ruta para obtener los datos de un reporte específico en formato JSON
+app.get('/reportes/datos/:id', (req, res) => {
+  const { id } = req.params;
+
+  console.log('ID recibido:', id); // Log del ID recibido
+
+  // Verificar que el ID sea un número
+  if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'El ID debe ser un número' });
+  }
+
+  // Consulta para obtener la información del reporte
+  const reporteQuery = 'SELECT * FROM reportes WHERE id_reporte = ?';
+
+  db.query(reporteQuery, [id], (error, resultadoReporte) => {
+      if (error) {
+          console.error('Error al obtener los datos del reporte:', error);
+          return res.status(500).json({ success: false, error: 'Error al obtener los datos del reporte' });
+      }
+
+      console.log('Resultado de la consulta de reporte:', resultadoReporte); // Log de resultados
+
+      if (resultadoReporte.length === 0) {
+          return res.status(404).json({ success: false, error: 'Reporte no encontrado' });
+      }
+
+      const reporte = resultadoReporte[0];
+      const tipoReporte = reporte.tipo_reporte;
+      const fechaReporte = reporte.fecha; // Asegúrate de que la fecha esté disponible
+
+      let consultaDatos;
+      const params = [];
+
+      // Definir consulta según el tipo de reporte
+      switch (tipoReporte) {
+          case 'Reporte de Alumnos Activos':
+            consultaDatos = `
+            SELECT a.id_alumno AS id_alumno, 
+               a.nombre AS nombre_alumno, 
+               a.apellido AS apellido_alumno,
+               g.nombre_grado AS nombre_grado,
+               a.seccion, 
+               a.estado
+        FROM alumnos AS a
+        JOIN grados AS g ON a.id_grado = g.id_grado  
+        WHERE a.estado = 'activo'
+        `;
+              break;
+          case 'Reporte de Alumnos Inactivos':
+            consultaDatos = `
+        SELECT a.id_alumno AS id_alumno, 
+               a.nombre AS nombre_alumno, 
+               a.apellido AS apellido_alumno,
+               g.nombre_grado AS nombre_grado,
+               a.seccion, 
+               a.estado
+        FROM alumnos AS a
+        JOIN grados AS g ON a.id_grado = g.id_grado  
+        WHERE a.estado = 'inactivo'
+    `;
+    break;
+              break;
+          case 'Reporte de Asistencia':
+              consultaDatos = `
+                  SELECT a.nombre_alumno, a.apellido_alumno,
+                      SUM(CASE WHEN asis.estado = 'presente' THEN 1 ELSE 0 END) AS veces_presente,
+                      SUM(CASE WHEN asis.estado = 'tarde' THEN 1 ELSE 0 END) AS veces_tarde,
+                      SUM(CASE WHEN asis.estado = 'ausente' THEN 1 ELSE 0 END) AS veces_ausente
+                  FROM asistencias AS asis
+                  JOIN alumnos AS a ON asis.id_alumno = a.id_alumno
+                  WHERE asis.fecha = ?
+                  GROUP BY a.id_alumno
+              `;
+              params.push(fechaReporte); // Agrega la fecha al array de parámetros
+              break;
+              case 'Reporte de Asistencia de Profesores':
+        consultaDatos = `
+          SELECT p.nombre,
+              SUM(CASE WHEN asis.estado = 'presente' THEN 1 ELSE 0 END) AS veces_presente,
+              SUM(CASE WHEN asis.estado = 'tarde' THEN 1 ELSE 0 END) AS veces_tarde,
+              SUM(CASE WHEN asis.estado = 'ausente' THEN 1 ELSE 0 END) AS veces_ausente
+          FROM asistencias AS asis
+          JOIN profesores AS p ON asis.id_profesor = p.id_profesor
+          WHERE asis.fecha = ?
+          GROUP BY p.id_profesor
+        `;
+        params.push(fechaReporte); // Agrega la fecha como parámetro
+        break;
+          case 'Reporte de Pagos':
+            consultaDatos = `
+            SELECT c.numero_recibo, 
+                   c.monto, 
+                   c.estado, 
+                   DATE_FORMAT(c.fecha_emision, '%Y-%m-%d') AS fecha_emision, 
+                   DATE_FORMAT(c.fecha_pago, '%Y-%m-%d') AS fecha_pago,
+                   c.descripcion,
+                   a.nombre
+            FROM control AS c
+            JOIN alumnos AS a ON c.id_alumno = a.id_alumno
+            WHERE c.estado = ?
+        `;
+              params.push(reporte.estado_pago); // Agrega el estado de pago
+              break;
+          default:
+              console.error('Tipo de reporte no válido:', tipoReporte); // Log de error
+              return res.status(400).json({ success: false, error: 'Tipo de reporte no válido' });
+      }
+
+      console.log('Consulta de datos:', consultaDatos, 'Con parámetros:', params); // Log de consulta
+
+      // Consulta los datos del reporte
+      db.query(consultaDatos, params, (errorDatos, datos) => {
+          if (errorDatos) {
+              console.error('Error al obtener los datos del reporte:', errorDatos);
+              return res.status(500).json({ success: false, error: 'Error al obtener los datos del reporte' });
+          }
+
+          res.json({ success: true, datos });
       });
   });
 });
 
 //vista profesor
-//modulo calificaciones
-//obtener grados y secciones
-app.get('/calificaciones', (req, res) => {
-  const queryGrados = 'SELECT * FROM grados'; // Consulta para obtener grados
-  const querySecciones = 'SELECT * FROM secciones'; // Consulta para obtener secciones
-  const queryCursos = 'SELECT * FROM cursos'; // Consulta para obtener cursos
+// Ruta para mostrar el formulario de calificaciones
+app.get('/calificaciones', async (req, res) => {
+  // Verifica si el usuario está autenticado
+  if (!req.session.user) {
+    return res.status(401).send("Acceso no autorizado.");
+  }
+  
+  const idProfesor = req.session.user.id_usuario;
 
-  // Realizar las consultas de grados, secciones y cursos en paralelo
-  db.query(queryGrados, (errorGrados, grados) => {
-      if (errorGrados) return res.status(500).send(errorGrados);
+  try {
+    const cursosYAlumnos = await obtenerCursosYAlumnosPorProfesor(idProfesor);
+    res.render('calificaciones/index', { cursosYAlumnos });
+  } catch (err) {
+    console.error("Error al obtener datos:", err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
 
-      db.query(querySecciones, (errorSecciones, secciones) => {
-          if (errorSecciones) return res.status(500).send(errorSecciones);
 
-          db.query(queryCursos, (errorCursos, cursos) => {
-              if (errorCursos) return res.status(500).send(errorCursos);
+// Ruta para obtener alumnos por curso
+app.get('/obtener_alumnos_por_profesor', async (req, res) => {
+  // Verifica si el usuario está autenticado
+  if (!req.session.user) {
+    return res.status(401).send("Acceso no autorizado.");
+  }
+  
+  const idProfesor = req.session.user.id_usuario;
+  const cursoId = req.query.curso_id;
 
-              // Renderizar la vista con los grados, secciones y cursos
-              res.render('calificaciones/index', { grados, secciones, cursos });
-          });
+  try {
+    const alumnos = await obtenerAlumnosPorCursoYProfesor(idProfesor, cursoId);
+    res.json(alumnos);
+  } catch (err) {
+    console.error("Error al obtener datos:", err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
+
+
+// Función para guardar calificaciones
+app.post('/guardar_calificaciones', async (req, res) => {
+  // Verifica si el usuario está autenticado
+  if (!req.session.user) {
+    return res.status(401).send("Acceso no autorizado.");
+  }
+  
+  const calificaciones = req.body.calificaciones;
+  const id_curso = req.body.id_curso;
+
+  // Array para almacenar las promesas de inserción
+  const insertPromises = [];
+
+  for (const id_alumno in calificaciones) {
+    const { bimestre1, bimestre2, bimestre3, bimestre4 } = calificaciones[id_alumno];
+    const promedio = (parseFloat(bimestre1 || 0) + parseFloat(bimestre2 || 0) + parseFloat(bimestre3 || 0) + parseFloat(bimestre4 || 0)) /
+                     ((bimestre1 ? 1 : 0) + (bimestre2 ? 1 : 0) + (bimestre3 ? 1 : 0) + (bimestre4 ? 1 : 0));
+
+    const sql = `INSERT INTO calificaciones (id_alumno, id_curso, bimestre_I, bimestre_II, bimestre_III, bimestre_IV, promedio) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE 
+                 bimestre_I = ?, bimestre_II = ?, bimestre_III = ?, bimestre_IV = ?, promedio = ?`;
+
+    const promise = new Promise((resolve, reject) => {
+      db.query(sql, [id_alumno, id_curso, bimestre1, bimestre2, bimestre3, bimestre4, promedio, bimestre1, bimestre2, bimestre3, bimestre4, promedio], (err, result) => {
+        if (err) {
+          console.error('Error al guardar calificaciones:', err);
+          return reject(err);
+        }
+        resolve(result);
       });
-  });
-});
-
-//obtener alumnos segun grado y seccion
-app.get('/calificaciones/alumnos', (req, res) => {
-  const grado = req.query.grado;
-  const seccion = req.query.seccion;
-
-  // Añade estas líneas para depuración
-  console.log("Grado:", grado); // Debe imprimir "9"
-  console.log("Sección:", seccion); // Debe imprimir "B"
-
-  const query = `
-      SELECT a.id_alumno, a.nombre, a.apellido, g.nombre_grado, a.seccion,
-             IFNULL(c.nombre_curso, 'Sin curso asignado') AS nombre_curso,
-             IFNULL(cal.calificacion, 'Sin calificación') AS calificacion
-      FROM alumnos a
-      JOIN grados g ON a.id_grado = g.id_grado
-      LEFT JOIN calificaciones cal ON a.id_alumno = cal.id_alumno
-      LEFT JOIN cursos c ON cal.id_curso = c.id_curso
-      WHERE a.id_grado = ? AND a.seccion = ?
-      GROUP BY a.id_alumno, c.id_curso
-      ORDER BY cal.id_calificacion DESC
-  `;
-
-  db.query(query, [grado, seccion], (error, results) => {
-      if (error) {
-          console.error("Error en la consulta:", error);
-          return res.status(500).json({ message: "Error en la consulta" });
-      }
-
-      console.log("Resultados de la consulta:", results); // Muestra los resultados en la consola
-      res.json(results);
-  });
-});
-
-app.post('/calificaciones/asignar', (req, res) => {
-  const { id_alumno, id_curso, bimestre, calificacion } = req.body;
-
-  // Verifica los valores recibidos
-  console.log({ id_alumno, id_curso, bimestre, calificacion });
-
-  if (!id_alumno || !id_curso || !bimestre || !calificacion) {
-      return res.status(400).json({ message: "Todos los campos son requeridos" });
+    });
+    insertPromises.push(promise);
   }
 
+  try {
+    await Promise.all(insertPromises);
+    res.status(200).json({ message: 'Calificaciones guardadas exitosamente' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al guardar calificaciones' });
+  }
+});
+// Ruta para obtener calificaciones de un alumno
+app.get('/api/calificaciones/:idAlumno', (req, res) => {
+  const idAlumno = req.params.idAlumno;
+
   const query = `
-      INSERT INTO calificaciones (id_alumno, id_curso, bimestre, calificacion)
-      VALUES (?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE calificacion = VALUES(calificacion)
-  `;
+      SELECT a.nombre AS nombre_alumno, 
+             a.apellido AS apellido_alumno, 
+             g.nombre_grado AS grado_alumno, 
+             c.nombre_curso, 
+             p.nombre AS nombre_profesor, 
+             cal.bimestre_I AS bimestre1, 
+             cal.bimestre_II AS bimestre2, 
+             cal.bimestre_III AS bimestre3, 
+             cal.bimestre_IV AS bimestre4, 
+             cal.promedio
+      FROM calificaciones cal
+      JOIN cursos c ON c.id_curso = cal.id_curso
+      JOIN alumnos a ON a.id_alumno = cal.id_alumno
+      JOIN grados g ON a.id_grado = g.id_grado 
+      JOIN profesores p ON c.id_profesor = p.id_profesor  
+      WHERE cal.id_alumno = ?`;
 
-  db.query(query, [id_alumno, id_curso, bimestre, calificacion], (err, result) => {
-      if (err) {
-          console.error("Error al asignar la calificación:", err);
-          return res.status(500).json({ message: "Error al asignar la calificación" });
-      }
-
-      req.session.message = "Calificación asignada con éxito.";
-      res.redirect('/calificaciones'); // Redirige a la página de calificaciones
+  db.query(query, [idAlumno], (error, results) => {
+    if (error) {
+      console.error('Error en la consulta de la base de datos:', error);
+      return res.status(500).json({ error: 'Error en la consulta de la base de datos' });
+    }
+    if (!Array.isArray(results) || results.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron datos para el alumno' });
+    }
+    res.json(results);
   });
 });
+// Mantén las funciones para obtener cursos y alumnos igual que en tu módulo de asistencia
+async function obtenerAlumnosPorCursoYProfesor(idProfesor, cursoId) {
+  const query = `
+      SELECT 
+          a.id_alumno, 
+          a.nombre AS nombre, 
+          a.apellido AS apellido, 
+          c.nombre_curso, 
+          g.nombre_grado
+      FROM alumnos a
+      JOIN inscripciones i ON a.id_alumno = i.id_alumno
+      JOIN cursos c ON i.id_curso = c.id_curso
+      JOIN grados g ON c.id_grado = g.id_grado
+      WHERE c.id_profesor = ? AND c.id_curso = ?`;
 
-app.post('/calificaciones/editar', (req, res) => {
-    const { id_alumno, id_curso, calificacion } = req.body;
-
-    const query = `UPDATE calificaciones SET calificacion = ? WHERE id_alumno = ? AND id_curso = ?`;
-    db.query(query, [calificacion, id_alumno, id_curso], (err, result) => {
-        if (err) {
-            return res.status(500).json({ message: "Error al editar la calificación." });
-        }
-        return res.json({ message: "Calificación editada con éxito." });
+  return new Promise((resolve, reject) => {
+    db.query(query, [idProfesor, cursoId], (err, results) => {
+      if (err) {
+        console.error("Error en la consulta:", err.message);
+        return reject(err);
+      }
+      resolve(results);
     });
+  });
+}
+// Función para obtener cursos y alumnos asignados a un profesor (mantenla igual)
+async function obtenerCursosYAlumnosPorProfesor(idProfesor) {
+  const queryCursos = `
+      SELECT 
+          c.id_curso, 
+          c.nombre_curso, 
+          g.nombre_grado 
+      FROM cursos c
+      JOIN grados g ON c.id_grado = g.id_grado
+      WHERE c.id_profesor = ?`;
+
+  const queryAlumnos = `
+      SELECT 
+          a.id_alumno, 
+          a.nombre AS nombre_alumno,
+          i.id_curso
+      FROM alumnos a
+      JOIN inscripciones i ON a.id_alumno = i.id_alumno
+      JOIN cursos c ON i.id_curso = c.id_curso
+      WHERE c.id_profesor = ?`;
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const [cursos, alumnos] = await Promise.all([
+        new Promise((res, rej) => db.query(queryCursos, [idProfesor], (err, results) => err ? rej(err) : res(results))),
+        new Promise((res, rej) => db.query(queryAlumnos, [idProfesor], (err, results) => err ? rej(err) : res(results))),
+      ]);
+
+      const cursosConAlumnos = cursos.map(curso => {
+        return {
+          ...curso,
+          alumnos: alumnos.filter(alumno => alumno.id_curso === curso.id_curso),
+        };
+      });
+
+      resolve(cursosConAlumnos);
+    } catch (error) {
+      console.error("Error en la consulta:", error.message);
+      reject(error);
+    }
+  });
+}
+
+//modulo de asistencia alumnos
+app.get('/asistencia_alumnos', async (req, res) => {
+  // Verifica si el usuario está autenticado
+  if (!req.session.user) {
+    return res.status(401).send("Acceso no autorizado.");
+  }
+  
+  const idProfesor = req.session.user.id_usuario;
+
+  try {
+    const cursosYAlumnos = await obtenerCursosYAlumnosPorProfesor(idProfesor);
+    res.render('asistencia_alumnos/index', { cursosYAlumnos });
+  } catch (err) {
+    console.error("Error al obtener datos:", err);
+    res.status(500).send("Error al obtener datos");
+  }
 });
+
+app.get('/obtener_alumnos_por_profesor', async (req, res) => {
+  // Verifica si el usuario está autenticado
+  if (!req.session.user) {
+    return res.status(401).send("Acceso no autorizado.");
+  }
+  
+  const idProfesor = req.session.user.id_usuario; // Obtener ID del profesor
+  const cursoId = req.query.curso_id; // Obtener el ID del curso desde la consulta
+
+  try {
+    // Obtener alumnos por curso y profesor
+    const alumnos = await obtenerAlumnosPorCursoYProfesor(idProfesor, cursoId);
+    res.json(alumnos);
+  } catch (err) {
+    console.error("Error al obtener datos:", err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
+
+// Función para obtener alumnos por curso y profesor
+async function obtenerAlumnosPorCursoYProfesor(idProfesor, cursoId) {
+  const query = `
+      SELECT 
+          a.id_alumno, 
+          a.nombre AS nombre, 
+          a.apellido AS apellido, 
+          c.nombre_curso, 
+          g.nombre_grado
+      FROM alumnos a
+      JOIN inscripciones i ON a.id_alumno = i.id_alumno
+      JOIN cursos c ON i.id_curso = c.id_curso
+      JOIN grados g ON c.id_grado = g.id_grado
+      WHERE c.id_profesor = ? AND c.id_curso = ?`;
+
+  return new Promise((resolve, reject) => {
+    db.query(query, [idProfesor, cursoId], (err, results) => {
+      if (err) {
+        console.error("Error en la consulta:", err.message);
+        return reject(err);
+      }
+      resolve(results);
+    });
+  });
+}
+
+
+// Función para obtener cursos y alumnos asignados a un profesor
+async function obtenerCursosYAlumnosPorProfesor(idProfesor) {
+  const queryCursos = `
+      SELECT 
+          c.id_curso, 
+          c.nombre_curso, 
+          g.nombre_grado 
+      FROM cursos c
+      JOIN grados g ON c.id_grado = g.id_grado
+      WHERE c.id_profesor = ?`;
+
+  const queryAlumnos = `
+      SELECT 
+          a.id_alumno, 
+          a.nombre AS nombre_alumno,
+          i.id_curso
+      FROM alumnos a
+      JOIN inscripciones i ON a.id_alumno = i.id_alumno
+      JOIN cursos c ON i.id_curso = c.id_curso
+      WHERE c.id_profesor = ?`;
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const [cursos, alumnos] = await Promise.all([
+        new Promise((res, rej) => db.query(queryCursos, [idProfesor], (err, results) => err ? rej(err) : res(results))),
+        new Promise((res, rej) => db.query(queryAlumnos, [idProfesor], (err, results) => err ? rej(err) : res(results))),
+      ]);
+
+      const cursosConAlumnos = cursos.map(curso => {
+        return {
+          ...curso,
+          alumnos: alumnos.filter(alumno => alumno.id_curso === curso.id_curso),
+        };
+      });
+
+      resolve(cursosConAlumnos);
+    } catch (error) {
+      console.error("Error en la consulta:", error.message);
+      reject(error);
+    }
+  });
+}
+
+app.post('/guardar_asistencia', (req, res) => {
+  const { fecha_asistencia, asistencia } = req.body;
+
+  // Verifica que el objeto asistencia no esté vacío
+  if (!asistencia || Object.keys(asistencia).length === 0) {
+      return res.status(400).json({ message: 'El objeto asistencia no puede estar vacío.' });
+  }
+
+  const query = "INSERT INTO asistencias_alumnos (id_alumno, fecha, estado) VALUES (?, ?, ?)";
+  const queries = [];
+
+  // Prepara las consultas para cada alumno
+  for (const [id_alumno, estado] of Object.entries(asistencia)) {
+      const promise = new Promise((resolve, reject) => {
+          db.query(query, [id_alumno, fecha_asistencia, estado], (error) => {
+              if (error) {
+                  console.error('Error al insertar asistencia:', error);
+                  return reject(error);
+              }
+              resolve();
+          });
+      });
+      queries.push(promise);
+  }
+
+  // Ejecuta todas las consultas
+  Promise.all(queries)
+      .then(() => {
+          res.status(200).json({ message: 'Asistencias guardadas' });
+      })
+      .catch(error => {
+          console.error('Error al guardar asistencias:', error);
+          res.status(500).json({ message: 'Error al guardar asistencias' });
+      });
+});
+
+
+//modulo de horarios
+function obtenerHorarioPorProfesor(idProfesor) {
+  return new Promise((resolve, reject) => {
+      const query = `
+          SELECT h.id_horario, h.dia_semana, h.hora_inicio, h.hora_fin, 
+                 c.nombre_curso AS nombre_curso, g.nombre_grado AS nombre_grado, s.nombre_seccion AS nombre_seccion
+          FROM horarios h
+          JOIN cursos c ON h.id_curso = c.id_curso
+          JOIN grados g ON h.id_grado = g.id_grado
+          JOIN secciones s ON h.id_seccion = s.id_seccion
+          WHERE h.id_profesor = ?`;
+
+      db.query(query, [idProfesor], (err, results) => {
+          if (err) {
+              console.error('Error al obtener horarios:', err);
+              return reject(err);
+          }
+          resolve(results);
+      });
+  });
+}
+// Ruta para mostrar el horario del profesor
+app.get('/horarios_profesor', verificarAutenticacion, async (req, res) => {
+  const idProfesor = req.session.user.id_usuario; // Usamos el ID del profesor desde la sesión
+  try {
+      const horarios = await obtenerHorarioPorProfesor(idProfesor); // Método para obtener horarios
+      res.render('horarios_profesor/index', { horarios, user: req.session.user }); // Pasar los datos del usuario a la vista
+  } catch (error) {
+      console.error('Error al obtener los horarios:', error);
+      res.status(500).send('Error al obtener los horarios');
+  }
+});
+
+// Middleware para verificar si el usuario está autenticado
+function verificarAutenticacion(req, res, next) {
+  if (req.session.user && req.session.user.rol === 'profesor') {
+      return next();
+  }
+  res.redirect('/login-profesor'); // Redirige si no está autenticado o no es un profesor
+}
+
 
 // Rutas
 const authRouter = require('./routes/auth');

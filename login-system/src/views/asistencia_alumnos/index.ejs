@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asistencia de Alumnos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Margarine', sans-serif; display: flex; min-height: 100vh; background-color: #f7f7f7; }
+        .asistencia { width: 80px; height: 25px; text-align: center; cursor: pointer; border: 1px solid #ccc; border-radius: 5px; }
+        .presente { background-color: green; color: #FAF7F7; }
+        .tarde { background-color: orange; color: #0F0F0F; }
+        .ausente { background-color: red; color: white; }
+    </style>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Margarine', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        .sidebar {
+            width: 210px;
+            background-color: #2a2d34;
+            color: #fff;
+            position: fixed;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            overflow: auto;
+        }
+        .sidebar.active {
+            left: 0;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .nav-links li {
+            position: relative;
+        }
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            color: #fff;
+            text-decoration: none;
+            position: relative;
+        }
+        .nav-links a:hover {
+            background-color: #3e4149;
+        }
+        
+        /* Animación de movimiento para cada opción del menú al pasar el mouse */
+        .nav-links a:hover {
+            background-color: #3e4149;
+            transform: translateY(-5px); /* Mueve la opción hacia arriba */
+        }
+        /* Animación de retorno a la posición original */
+        .nav-links a {
+            transition: transform 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #3e4149; /* Cambia el color de fondo al pasar el mouse */
+        }
+        .dashboard-container {
+            margin-left: 250px;
+            margin-top: 60px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+        .modules-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 120px;
+            justify-content: center;
+        }
+        .module {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            color: #802b2b;
+            text-align: center;
+            padding: 20px;
+            width: calc(25% - 20px);
+            transition: transform 0.3s;
+        }
+        .module:hover {
+            transform: translateY(-5px);
+        }
+        .module h3 {
+            margin: 10px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+         /* Estilo para el contenedor del formulario */
+         .form-container {
+        display: flex;
+        flex-direction: column; /* Cambia la dirección a columna para que los formularios se apilen */
+        align-items: flex-end; /* Alinea los formularios a la derecha */
+        width: 80%; /* Ajusta el ancho del contenedor */
+        margin: 0 auto; /* Centra el contenedor */
+    }
+
+    .form-inline {
+        flex-wrap: nowrap; /* Evita que los elementos se envuelvan en múltiples filas */
+        margin-bottom: 10px; /* Espacio entre los formularios */
+    }
+
+    .form-control {
+        width: auto; /* Hace que el select y el input sean menos anchos */
+    }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .header, .footer {
+                left: 200px;
+                width: calc(100% - 200px);
+            }
+            .dashboard-container {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+         /* Estilos para el banner de éxito */
+         .success-message {
+            display: none;
+            background-color: #4caf50;
+            color: white;
+            padding: 20px 40px; /* Tamaño más grande */
+            text-align: center;
+            position: fixed;
+            top: 50%; /* Centrar verticalmente */
+            left: 50%; /* Centrar horizontalmente */
+            transform: translate(-50%, -50%); /* Ajustar para centrar perfectamente */
+            border-radius: 10px;
+            z-index: 1000;
+            font-size: 20px; /* Texto más grande */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Agregar sombra */
+            width: 80%; /* Hacer el mensaje más ancho */
+            max-width: 600px; /* Limitar el ancho máximo */
+        }
+        .success-message i {
+            margin-right: 10px; /* Espaciado entre el ícono y el texto */
+            font-size: 24px; /* Tamaño del ícono */
+        }
+        .table-container {
+    display: flex;
+    justify-content: flex-end; /* Mueve la tabla a la derecha */
+    width: 100%; /* Ancho completo para el contenedor */
+    padding-right: 200px; /* Espacio adicional a la derecha */
+}
+
+.table {
+    width: 100%; /* Ajusta el ancho de la tabla */
+    max-width: 800px; /* Ancho máximo para evitar que se vuelva demasiado grande */
+    margin-bottom: 20px; /* Espacio inferior para separar la tabla de otros elementos */
+}
+
+/* Estilo para el encabezado de la tabla */
+.table thead th {
+    background-color: #28a745; /* Cambia el color de fondo a verde (puedes ajustar este color) */
+    color: white; /* Color del texto */
+    font-weight: bold; /* Peso de la fuente */
+    text-align: center; /* Centra el texto en el encabezado */
+}
+
+/* Si deseas un color diferente para las filas impares */
+.table tbody tr:nth-child(odd) {
+    background-color: #f2f2f2; /* Color de fondo para filas impares */
+}
+
+    .pagination-container {
+        display: flex;
+        justify-content: center; /* Centra la paginación horizontalmente */
+        margin-top: 20px; /* Espacio superior para separar de la tabla */
+    }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="nav-category">
+            <h3><i class="fas fa-cogs"></i> Administración</h3>
+            <ul class="nav-links">
+                <li><a href="/dashboard-profesor"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/calificaciones"><i class="fas fa-user-graduate"></i> Calificaciones</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-category">
+            <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+            <ul class="nav-links">
+                <li><a href="/asistencia_alumnos"><i class="fas fa-user-check"></i> Asistencia</a></li>
+                <li><a href="/horarios_profesor"><i class="fas fa-clock"></i> Horarios</a></li>
+            </ul>
+        </div>       
+    </nav>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Registro de Asistencia de Alumnos</h1>
+
+        <div class="form-container">
+            <form action="/asistencia_alumnos" method="get" class="form-inline">
+                <label for="id_curso" class="mr-2">Curso:</label>
+                <select name="id_curso" id="id_curso" class="form-control mr-3" required>
+                    <option value="">Selecciona un curso</option>
+                    <% cursosYAlumnos.forEach(curso => { %>
+                        <option value="<%= curso.id_curso %>">
+                            <%= curso.nombre_curso %> - <%= curso.nombre_grado %>
+                        </option>
+                    <% }) %>
+                </select>
+                
+                <button type="submit" class="btn btn-primary">Consultar Alumnos</button>
+            </form>
+        
+            <form id="formGuardarAsistencia" action="/guardar_asistencia" method="post" class="form-inline">
+                <label for="fecha_asistencia" class="mr-2">Fecha:</label>
+                <input type="date" id="fecha_asistencia" name="fecha_asistencia" class="form-control mr-3" required>
+                <button type="submit" class="btn btn-success" onclick="prepararAsistencia(event)">Guardar Asistencia <span id="fechaTexto"></span></button>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <table class="table table-bordered">
+                <thead style="background-color: #28a745; color: white;">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Curso</th>
+                        <th>Asistencia</th>
+                    </tr>
+                </thead>
+                <tbody id="alumnosList"></tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination" id="alumnosPagination"></ul>
+            </nav>
+        </div>
+        
+        <script>
+            const estados = {
+                'Presente': 'presente',
+                'Tarde': 'tarde',
+                'Ausente': 'ausente'
+            };
+            let alumnos = [];
+            const alumnosPorPagina = 5;
+            let paginaActual = 1;
+        
+            function cambiarEstado(element) {
+                let currentState = element.innerText;
+                let nextState = Object.keys(estados)[(Object.keys(estados).indexOf(currentState) + 1) % Object.keys(estados).length];
+                element.innerText = nextState;
+                element.className = 'asistencia ' + estados[nextState];
+            }
+        
+            document.getElementById('fecha_asistencia').addEventListener('change', function() {
+                document.getElementById('fechaTexto').textContent = this.value ? `(${this.value})` : '';
+            });
+        
+            function cargarAlumnos() {
+                const id_curso = document.getElementById('id_curso').value;
+        
+                // Verifica que el ID del curso no esté vacío
+                if (!id_curso) {
+                    alert("Por favor selecciona un curso.");
+                    return;
+                }
+        
+                // Realiza la solicitud para obtener los alumnos por curso
+                fetch(`/obtener_alumnos_por_profesor?curso_id=${id_curso}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        alumnos = data; // Guarda los alumnos
+                        crearBotonesPaginacion();
+                        mostrarAlumnos(paginaActual);
+                    })
+                    .catch(error => console.error('Error al cargar los alumnos:', error));
+            }
+        
+            function mostrarAlumnos(pagina) {
+                const inicio = (pagina - 1) * alumnosPorPagina;
+                const alumnosPaginados = alumnos.slice(inicio, inicio + alumnosPorPagina);
+                const alumnosList = document.getElementById('alumnosList');
+                alumnosList.innerHTML = '';
+        
+                alumnosPaginados.forEach(alumno => {
+                    alumnosList.innerHTML += `<tr>
+                        <td>${alumno.nombre}</td>
+                        <td>${alumno.apellido}</td>
+                        <td>${alumno.nombre_curso}</td>
+                        <td><div class="asistencia" data-id="${alumno.id_alumno}" onclick="cambiarEstado(this)">Presente</div></td>
+                    </tr>`;
+                });
+            }
+        
+            function crearBotonesPaginacion() {
+                const totalPaginas = Math.ceil(alumnos.length / alumnosPorPagina);
+                const pagination = document.getElementById('alumnosPagination');
+                pagination.innerHTML = '';
+        
+                for (let i = 1; i <= totalPaginas; i++) {
+                    pagination.innerHTML += `<li class="page-item${i === paginaActual ? ' active' : ''}">
+                        <a class="page-link" href="#" onclick="paginaActual = ${i}; mostrarAlumnos(paginaActual); crearBotonesPaginacion();">${i}</a>
+                    </li>`;
+                }
+            }
+        
+            function prepararAsistencia(event) {
+                event.preventDefault(); // Previene el envío del formulario
+        
+                const fecha_asistencia = document.getElementById('fecha_asistencia').value;
+                const asistencia = {};
+        
+                // Recorre las filas de alumnos para recolectar el estado de asistencia
+                const rows = document.querySelectorAll('#alumnosList .asistencia');
+                rows.forEach(row => {
+                    const estado = row.innerText;
+                    const id_alumno = row.getAttribute('data-id');
+                    asistencia[id_alumno] = estados[estado] || 'ausente'; // Por defecto a 'ausente' si el estado no está definido
+                });
+        
+                // Verifica si el objeto asistencia tiene datos
+                if (Object.keys(asistencia).length === 0) {
+                    alert("Por favor selecciona un estado de asistencia para al menos un alumno.");
+                    return;
+                }
+        
+                // Envía el formulario
+                fetch('/guardar_asistencia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ fecha_asistencia, asistencia })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // Maneja la respuesta del servidor
+                    // Aquí podrías agregar lógica para limpiar el formulario o mostrar un mensaje de éxito
+                })
+                .catch(error => console.error('Error al guardar la asistencia:', error));
+            }
+        
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelector('form').addEventListener('submit', function(event) {
+                    event.preventDefault(); // Previene el envío del formulario
+                    cargarAlumnos(); // Llama a la función para cargar alumnos
+                });
+        
+                // Asegúrate de que el formulario de guardar asistencia también use la nueva función
+                document.getElementById('formGuardarAsistencia').addEventListener('submit', prepararAsistencia);
+            });
+        </script>
+        
+</body>
+</html>

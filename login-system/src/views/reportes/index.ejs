@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Reportes</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo básico para el menú lateral */
+        body {
+            margin: 0;
+            font-family: 'Margarine', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Contenido del cargando */
+.loading-content {
+    text-align: center;
+    color: white;
+    font-size: 24px;
+}
+
+/* Ícono de carga */
+.loading-content i {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+/* Menú lateral */
+.sidebar {
+            width: 210px;
+            background-color: #2a2d34;
+            color: #fff;
+            position: fixed;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            overflow: auto;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 13.5px;
+            color: #fff;
+            text-decoration: none;
+            position: relative;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            gap: 15px; /* Espaciado entre ícono y texto */
+        }
+        
+        .nav-links a i {
+            font-size: 16px; /* Asegura que todos los íconos tengan el mismo tamaño */
+            width: 30px; /* Ancho fijo para los íconos, ajustado según el tamaño del ícono más grande */
+            text-align: center; /* Centra el ícono en el espacio disponible */
+            display: inline-block; /* Asegura que el ícono y texto estén alineados correctamente */
+        }
+
+        
+        .nav-links a:hover {
+            background-color: #3e4149;
+            transform: translateY(-5px);
+        }
+
+        /* Modales */
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .modal-header .btn-close {
+            color: white;
+        }
+        
+        .modal .btn {
+            margin-top: 10px;
+        }
+        #btnAddGrade i {
+            margin-right: 1px; /* Espacio entre el ícono y el texto */
+        }
+        .nav-category {
+            margin-bottom: 10px; /* Espacio entre categorías */
+            margin-top: 10px;
+        }
+        
+        .nav-category h3 {
+            font-size: 1em; /* Tamaño del texto del título */
+            color: #05f505; /* Color del título */
+            margin-bottom: 7px; /* Espacio debajo del título */
+        }
+
+    </style>
+</head>
+<body>
+ <!-- Contenedor de carga -->
+ <div id="loading" style="display: none;" class="loading-overlay">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando...</p>
+    </div>
+</div>
+
+<!-- Menú lateral -->
+<nav class="sidebar">
+    <div class="nav-category">
+        <h3><i class="fas fa-cogs"></i> Administración</h3>
+        <ul class="nav-links">
+            <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a></li>
+            <li><a href="/profesores"><i class="fas fa-chalkboard-teacher"></i> Profesores</a></li>
+            <li><a href="/alumnos"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+            <li><a href="/grados"><i class="fas fa-graduation-cap"></i> Grados</a></li>
+        </ul>
+    </div>
+    
+    <div class="nav-category">
+        <h3><i class="fas fa-book-open"></i> Gestión Académica</h3>
+        <ul class="nav-links">
+            <li><a href="/cursos"><i class="fas fa-book"></i> Cursos</a></li>
+            <li><a href="/horarios"><i class="fas fa-clock"></i> Horarios</a></li>
+            <li><a href="/asistencias"><i class="fas fa-user-check"></i> Asistencia</a></li>
+            <li><a href="/periodos"><i class="fas fa-calendar-alt"></i> Periodo Escolar</a></li>
+        </ul>
+    </div>
+    
+    <div class="nav-category">
+        <h3><i class="fas fa-money-check-alt"></i> Gestión Financiera</h3>
+        <ul class="nav-links">
+            <li><a href="/pagos"><i class="fas fa-money-bill-alt"></i> Control de Pagos y Recibos</a></li>
+        </ul>
+    </div>
+    
+    <div class="nav-category">
+        <h3><i class="fas fa-chart-line"></i> Reportes y Notificaciones</h3>
+        <ul class="nav-links">
+            <li><a href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+        </ul>
+    </div>        
+</nav>
+
+    <div class="container mt-5">
+        <div class="text-left" style="margin-left: 10%;"> <!-- Añadido margen izquierdo aquí -->
+            <h1>Módulo de Reportes</h1>
+        </div>
+    
+        <table class="table mt-4" style="margin-left: 10%;"> <!-- Añadido margen izquierdo aquí también -->
+            <thead style="background-color: #28a745; color: white;">
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo de Reporte</th>
+                    <th>Estado de Pago</th>
+                    <th>Fecha de Generación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% reportes.forEach(reporte => { %>
+                    <tr>
+                        <td><%= reporte.id_reporte %></td>
+                        <td><%= reporte.tipo_reporte %></td>
+                        <td><%= reporte.estado_pago || 'No definido' %></td>
+                        <td><%= reporte.fecha_generacion.toISOString().split('T')[0] %></td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="descargarReporte('<%= reporte.id_reporte %>', '<%= reporte.tipo_reporte %>', '<%= reporte.estado_pago %>', '<%= reporte.fecha_generacion %>')">Descargar</button>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    
+
+<script>
+   $(document).ready(function() {
+    window.jsPDF = window.jspdf.jsPDF; // Asegura que jsPDF esté disponible
+
+    window.descargarReporte = function(id, tipo, estado, fecha) {
+        const doc = new jsPDF('landscape'); // Establece la hoja en formato horizontal
+
+        // Agregar el logo
+        const logo = new Image();
+        logo.src = 'img/home.jpg'; // Asegúrate de cambiar esto a la ruta correcta de tu logo
+        logo.onload = function() {
+            doc.addImage(logo, 'PNG', 14, 10, 30, 30); // Ajusta las dimensiones según necesites
+
+            // Título del colegio
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(24);
+            const escuela = 'Centro Escolar La Escuela de Cristo';
+            const escuelaWidth = doc.getTextWidth(escuela);
+            doc.text(escuela, (doc.internal.pageSize.getWidth() - escuelaWidth) / 2, 20); // Centra el título
+
+            // Agregar el título del reporte con estado
+            doc.setFont('times', 'normal');
+            doc.setFontSize(16);
+
+            // Modificar el título según el tipo y el estado
+            let titulo;
+            if (tipo === 'Reporte de Pagos') {
+                titulo = `Reporte de Pagos - Estado: ${estado}`; // Incluye el estado en el título
+            } else if (tipo === 'Reporte de Alumnos') {
+                titulo = `Reporte de Alumnos - Estado: ${estado}`; // Título específico para el reporte de alumnos
+            } else {
+                titulo = ` ${tipo}`; // Título genérico para otros reportes
+            }
+
+            const tituloWidth = doc.getTextWidth(titulo);
+            doc.text(titulo, (doc.internal.pageSize.getWidth() - tituloWidth) / 2, 30); // Centra el texto
+
+            // Agregar la fecha de generación
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10); // Reducir tamaño de fuente
+            const fechaGeneracion = `Fecha de Generación: ${new Date(fecha).toLocaleString()}`;
+            doc.text(fechaGeneracion, 10, doc.internal.pageSize.getHeight() - 20); // Abajo a la izquierda
+
+            // Aquí comienza la tabla
+            $.ajax({
+                type: 'GET',
+                url: `/reportes/datos/${id}`,
+                success: function(response) {
+                    if (response.success) {
+                        const datos = response.datos;
+
+                        // Asegúrate de que hay datos
+                        if (datos.length > 0) {
+                            let head, body;
+
+                            // Ajustar encabezados y cuerpo según el tipo de reporte
+                            if (tipo === 'Reporte de Pagos') {
+                                head = [['Número Recibo', 'Monto', 'Estado', 'Fecha Emisión', 'Fecha Pago', 'Descripción', 'Nombre']]; // Encabezados para el reporte de pagos
+                                body = datos.map(item => [
+                                    item.numero_recibo,
+                                    item.monto,
+                                    item.estado, // Aquí deberías tener el estado del pago (Pagado, Pendiente, Cancelado)
+                                    item.fecha_emision,
+                                    item.fecha_pago,
+                                    item.descripcion,
+                                    item.nombre
+                                ]);
+                            } else if (tipo === 'Reporte de Alumnos') {
+                                head = [['Nombre', 'Apellido', 'Grado', 'Sección', 'Estado']]; // Encabezados ajustados
+                                body = datos.map(item => [
+                                    item.nombre,
+                                    item.apellido,
+                                    item.nombre_grado,  // Asegúrate de que el ID del grado esté disponible
+                                    item.seccion,
+                                    item.estado
+                                ]);
+                            } else {
+                                // Aquí puedes manejar otros tipos de reportes
+                                head = [[...Object.keys(datos[0])]]; // Mantener encabezados de otros reportes
+                                body = datos.map(item => Object.values(item)); // Datos de cada fila
+                            }
+
+                            // Añadir la tabla
+                            doc.autoTable({
+                                head: head,
+                                body: body,
+                                startY: 50, // Ajuste de posición inicial para la tabla
+                                theme: 'grid', // Tema de la tabla
+                                headStyles: { fillColor: [76, 175, 80] }, // Color verde suave para el encabezado
+                                styles: {
+                                    cellPadding: 3, // Espaciado dentro de las celdas
+                                    fontSize: 11, // Tamaño de fuente
+                                },
+                                alternateRowStyles: { fillColor: [240, 255, 240] } // Color de fondo alternativo para filas
+                            });
+
+                            // Guardar el documento
+                            doc.save(`Reporte_${tipo}_${new Date(fecha).toISOString().split('T')[0]}.pdf`);
+                        } else {
+                            alert('No se encontraron datos para este reporte.');
+                        }
+                    } else {
+                        console.error('Error al obtener los datos del reporte:', response.error);
+                        alert('Error al obtener los datos del reporte.');
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                    alert('Hubo un error al generar el reporte. Inténtalo de nuevo más tarde.');
+                }
+            });
+        };
+    };
+});
+
+
+</script>
+
+</body>
+</html>
