@@ -29,7 +29,7 @@ const db = mysql.createConnection({
   user: 'root',
   password: '',
   database: 'datos_alumnos',
-  port: 3306
+  port: 3307
 });
 
 // Exportar la conexión de la base de datos para usarla en otros archivos
