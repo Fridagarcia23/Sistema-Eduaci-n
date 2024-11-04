@@ -133,7 +133,9 @@
                         <th>Acciones</th> <!-- Columna para el botón de imprimir -->
                     </tr>
                 </thead>
-                <tbody id="alumnosList"></tbody>
+                <tbody id="alumnosList">
+                    <!-- Las filas de alumnos se generan en JavaScript -->
+                  </tbody>                  
             </table>
         </div>
     
@@ -271,25 +273,30 @@ function crearBotonesPaginacion() {
 
 function prepararCalificaciones(event) {
     event.preventDefault(); // Evitar el envío del formulario
-
+    
+    // Crear un objeto para almacenar las calificaciones de cada alumno
     const calificaciones = {};
     const idCurso = document.getElementById('id_curso').value;
 
+    // Recorrer todos los inputs de calificación
     document.querySelectorAll('.calificacion').forEach(input => {
         const id_alumno = input.getAttribute('data-id');
         const bimestre = input.getAttribute('data-bimestre');
         const calificacion = input.value;
 
+        // Crear un objeto para cada alumno si aún no existe
         if (!calificaciones[id_alumno]) {
             calificaciones[id_alumno] = {};
         }
 
+        // Guardar la calificación en el objeto, solo si el campo no está vacío
         if (calificacion) {
             calificaciones[id_alumno][`bimestre${bimestre}`] = calificacion;
         }
     });
 
-    fetch('/guardar_calificaciones', {
+      // Enviar el objeto con las calificaciones al servidor usando fetch
+      fetch('/guardar_calificaciones', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -298,8 +305,9 @@ function prepararCalificaciones(event) {
     })
     .then(response => response.json())
     .then(data => {
+        // Mostrar mensaje de éxito o error
         alert(data.message);
-        cargarAlumnos(); // Recargar alumnos
+        cargarAlumnos(); // Recargar la lista de alumnos
     })
     .catch(error => console.error('Error al guardar calificaciones:', error));
 }

@@ -2107,46 +2107,45 @@ app.get('/obtener_alumnos_por_profesor', async (req, res) => {
 
 // Función para guardar calificaciones
 app.post('/guardar_calificaciones', async (req, res) => {
-  // Verifica si el usuario está autenticado
   if (!req.session.user) {
-    return res.status(401).send("Acceso no autorizado.");
+      return res.status(401).send("Acceso no autorizado.");
   }
-  
-  const calificaciones = req.body.calificaciones;
-  const id_curso = req.body.id_curso;
 
-  // Array para almacenar las promesas de inserción
-  const insertPromises = [];
-
-  for (const id_alumno in calificaciones) {
-    const { bimestre1, bimestre2, bimestre3, bimestre4 } = calificaciones[id_alumno];
-    const promedio = (parseFloat(bimestre1 || 0) + parseFloat(bimestre2 || 0) + parseFloat(bimestre3 || 0) + parseFloat(bimestre4 || 0)) /
-                     ((bimestre1 ? 1 : 0) + (bimestre2 ? 1 : 0) + (bimestre3 ? 1 : 0) + (bimestre4 ? 1 : 0));
-
-    const sql = `INSERT INTO calificaciones (id_alumno, id_curso, bimestre_I, bimestre_II, bimestre_III, bimestre_IV, promedio) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE 
-                 bimestre_I = ?, bimestre_II = ?, bimestre_III = ?, bimestre_IV = ?, promedio = ?`;
-
-    const promise = new Promise((resolve, reject) => {
-      db.query(sql, [id_alumno, id_curso, bimestre1, bimestre2, bimestre3, bimestre4, promedio, bimestre1, bimestre2, bimestre3, bimestre4, promedio], (err, result) => {
-        if (err) {
-          console.error('Error al guardar calificaciones:', err);
-          return reject(err);
-        }
-        resolve(result);
-      });
-    });
-    insertPromises.push(promise);
-  }
+  const calificaciones = req.body.calificaciones; // Las calificaciones por alumno
+  const id_curso = req.body.id_curso; // ID del curso
 
   try {
-    await Promise.all(insertPromises);
-    res.status(200).json({ message: 'Calificaciones guardadas exitosamente' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al guardar calificaciones' });
+      await db.beginTransaction();
+
+      for (const id_alumno in calificaciones) {
+          const { bimestre1, bimestre2, bimestre3, bimestre4, id_calificacion } = calificaciones[id_alumno]; // Incluye id_calificacion
+          const suma = parseFloat(bimestre1 || 0) + parseFloat(bimestre2 || 0) + parseFloat(bimestre3 || 0) + parseFloat(bimestre4 || 0);
+          const cantidad = (bimestre1 ? 1 : 0) + (bimestre2 ? 1 : 0) + (bimestre3 ? 1 : 0) + (bimestre4 ? 1 : 0);
+          const promedio = cantidad > 0 ? (suma / cantidad) : 0;
+
+          // Consulta SQL para insertar o actualizar
+          const sql = `
+              INSERT INTO calificaciones (id_calificacion, id_alumno, id_curso, bimestre_I, bimestre_II, bimestre_III, bimestre_IV, promedio)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              ON DUPLICATE KEY UPDATE 
+                  bimestre_I = VALUES(bimestre_I),
+                  bimestre_II = VALUES(bimestre_II),
+                  bimestre_III = VALUES(bimestre_III),
+                  bimestre_IV = VALUES(bimestre_IV),
+                  promedio = VALUES(promedio)`;
+
+          await db.query(sql, [id_calificacion, id_alumno, id_curso, bimestre1, bimestre2, bimestre3, bimestre4, promedio]);
+      }
+
+      await db.commit();
+      res.send({ message: "Calificaciones guardadas exitosamente." });
+  } catch (error) {
+      await db.rollback();
+      console.error("Error al guardar las calificaciones:", error);
+      res.status(500).send("Error al guardar las calificaciones.");
   }
 });
+
 // Ruta para obtener calificaciones de un alumno
 app.get('/api/calificaciones/:idAlumno', (req, res) => {
   const idAlumno = req.params.idAlumno;
@@ -2170,16 +2169,35 @@ app.get('/api/calificaciones/:idAlumno', (req, res) => {
       WHERE cal.id_alumno = ?`;
 
   db.query(query, [idAlumno], (error, results) => {
-    if (error) {
-      console.error('Error en la consulta de la base de datos:', error);
-      return res.status(500).json({ error: 'Error en la consulta de la base de datos' });
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      return res.status(404).json({ error: 'No se encontraron datos para el alumno' });
-    }
-    res.json(results);
+      if (error) {
+          console.error('Error en la consulta de la base de datos:', error);
+          return res.status(500).json({ error: 'Error en la consulta de la base de datos' });
+      }
+
+      if (!Array.isArray(results) || results.length === 0) {
+          return res.status(404).json({ error: 'No se encontraron datos para el alumno' });
+      }
+
+      res.json(results);
   });
 });
+
+// Función para agregar o actualizar calificaciones
+function agregarOActualizarCalificacion(calificacion) {
+  const { id_estudiante, id_curso, nota } = calificacion;
+
+  const query = `
+      INSERT INTO calificaciones (id_estudiante, id_curso, nota)
+      VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE nota = ?;
+  `;
+
+  connection.query(query, [id_estudiante, id_curso, nota, nota], (error, results) => {
+      if (error) throw error;
+      console.log(results);
+  });
+}
+
 // Mantén las funciones para obtener cursos y alumnos igual que en tu módulo de asistencia
 async function obtenerAlumnosPorCursoYProfesor(idProfesor, cursoId) {
   const query = `
