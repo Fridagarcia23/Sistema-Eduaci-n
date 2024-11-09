@@ -558,19 +558,19 @@
         
             // Función para actualizar el color del círculo de asistencia
             function updateColor($element) {
-                const estado = $element.data('estado');
-                switch (estado) {
-                    case 'presente':
-                        $element.css('background-color', '#28a745'); // Verde
-                        break;
-                    case 'tarde':
-                        $element.css('background-color', '#ffc107'); // Amarillo
-                        break;
-                    case 'ausente':
-                        $element.css('background-color', '#dc3545'); // Rojo
-                        break;
-                }
-            }
+        const estado = $element.data('estado');
+        switch (estado) {
+            case 'presente':
+                $element.css('background-color', '#28a745'); // Verde
+                break;
+            case 'tarde':
+                $element.css('background-color', '#ffc107'); // Amarillo
+                break;
+            case 'ausente':
+                $element.css('background-color', '#dc3545'); // Rojo
+                break;
+        }
+    }
 
             // Manejar el cambio de fecha
             $('#fecha-asistencia').on('change', function() {
@@ -581,8 +581,6 @@
                 // Implementa la lógica para cargar asistencia según la fecha seleccionada
             });
 
-    // Enviar la data a tu servidor (aquí puedes ajustar la URL)
-    // Guardar asistencia
     // Guardar asistencia
     $('#guardar-asistencia').on('click', function() {
         const fechaSeleccionada = $('#fecha-asistencia').val();

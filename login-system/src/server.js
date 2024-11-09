@@ -827,76 +827,32 @@ app.get('/profesores', (req, res) => {
       // Lista de grados
       const grados = [
           // ... tus grados aquí
-          { id: 5, nombre: 'Primero Primaria' },
-          { id: 6, nombre: 'Segundo Primaria' },
-          { id: 7, nombre: 'Tercero Primaria' },
-          { id: 8, nombre: 'Cuarto Primaria' },
-          { id: 9, nombre: 'Quinto Primaria' },
-          { id: 12, nombre: 'Sexto Primaria' },
-          { id: 13, nombre: 'Primero Básico' },
-          { id: 14, nombre: 'Segundo Básico' },
-          { id: 15, nombre: 'Tercero Básico' },
-          { id: 20, nombre: 'Bachillerato en Ciencias Biológicas' },
-          { id: 21, nombre: 'Bachillerato en Computación' },
-          { id: 22, nombre: 'Bachillerato en Medicina' },
-          { id: 23, nombre: 'Bachillerato en Magisterio' },
-          { id: 26, nombre: 'Bachillerato en Turismo' },
-          { id: 27, nombre: 'Bachillerato en Criminología' },
-          { id: 29, nombre: 'Bachillerato en Secretariado' },
-          { id: 30, nombre: 'Perito Contador' },
+          { id: 1, nombre: 'Primero Primaria' },
+          { id: 2, nombre: 'Segundo Primaria' },
+          { id: 3, nombre: 'Tercero Primaria' },
+          { id: 4, nombre: 'Cuarto Primaria' },
+          { id: 5, nombre: 'Quinto Primaria' },
+          { id: 6, nombre: 'Sexto Primaria' },
+          { id: 7, nombre: 'Primero Básico' },
+          { id: 8, nombre: 'Segundo Básico' },
+          { id: 9, nombre: 'Tercero Básico' },
+          { id: 10, nombre: 'Bachillerato en Ciencias Biológicas' },
+          { id: 11, nombre: 'Bachillerato en Computación' },
+          { id: 12, nombre: 'Bachillerato en Medicina' },
+          { id: 13, nombre: 'Bachillerato en Magisterio' },
+          { id: 14, nombre: 'Bachillerato en Turismo' },
+          { id: 15, nombre: 'Bachillerato en Criminología' },
+          { id: 16, nombre: 'Bachillerato en Secretariado' },
+          { id: 17, nombre: 'Perito Contador' },
       ];
 
       // Lista de secciones asociadas a cada grado
       const secciones = [
           // ... tus secciones aquí
-          { id: 153, id_grado: 20, nombre: 'A' },
-          { id: 154, id_grado: 20, nombre: 'B' },
-          { id: 155, id_grado: 20, nombre: 'C' },
-          { id: 158, id_grado: 21, nombre: 'A' },
-          { id: 159, id_grado: 21, nombre: 'B' },
-          { id: 160, id_grado: 21, nombre: 'C' },
-          { id: 162, id_grado: 22, nombre: 'B' },
-          { id: 163, id_grado: 22, nombre: 'C' },
-          { id: 164, id_grado: 23, nombre: 'A' },
-          { id: 165, id_grado: 23, nombre: 'B' },
-          { id: 166, id_grado: 23, nombre: 'C' },
-          { id: 180, id_grado: 6,  nombre: 'A' },
-          { id: 181, id_grado: 6,  nombre: 'B' },
-          { id: 182, id_grado: 6,  nombre: 'C' },
-          { id: 190, id_grado: 7,  nombre: 'A' },
-          { id: 191, id_grado: 7,  nombre: 'B' },
-          { id: 192, id_grado: 7,  nombre: 'C' },
-          { id: 193, id_grado: 8,  nombre: 'A' },
-          { id: 194, id_grado: 8,  nombre: 'B' },
-          { id: 195, id_grado: 8,  nombre: 'C' },
-          { id: 196, id_grado: 9,  nombre: 'A' },
-          { id: 197, id_grado: 9,  nombre: 'B' },
-          { id: 198, id_grado: 9,  nombre: 'C' },
-          { id: 199, id_grado: 12, nombre: 'A' },
-          { id: 200, id_grado: 12, nombre: 'B' },
-          { id: 201, id_grado: 12, nombre: 'C' },
-          { id: 202, id_grado: 13, nombre: 'A' },
-          { id: 203, id_grado: 13, nombre: 'B' },
-          { id: 204, id_grado: 13, nombre: 'C' },
-          { id: 205, id_grado: 14, nombre: 'A' },
-          { id: 206, id_grado: 14, nombre: 'B' },
-          { id: 207, id_grado: 14, nombre: 'C' },
-          { id: 208, id_grado: 15, nombre: 'A' },
-          { id: 209, id_grado: 15, nombre: 'B' },
-          { id: 210, id_grado: 15, nombre: 'C' },
-          { id: 211, id_grado: 26, nombre: 'A' },
-          { id: 212, id_grado: 26, nombre: 'B' },
-          { id: 213, id_grado: 26, nombre: 'C' },
-          { id: 217, id_grado: 27, nombre: 'A' },
-          { id: 218, id_grado: 27, nombre: 'B' },
-          { id: 219, id_grado: 27, nombre: 'C' },
-          { id: 226, id_grado: 29, nombre: 'A' },
-          { id: 230, id_grado: 30, nombre: 'A' },
-          { id: 231, id_grado: 30, nombre: 'B' },
-          { id: 232, id_grado: 30, nombre: 'C' },
-          { id: 233, id_grado: 30, nombre: 'D' },
-          { id: 238, id_grado: 5,  nombre: 'A' },
-          { id: 239, id_grado: 5,  nombre: 'B' },
+          { id: 10, id_grado: 20, nombre: 'A' },
+          { id: 11, id_grado: 20, nombre: 'B' },
+          { id: 12, id_grado: 20, nombre: 'C' },
+          { id: 22, id_grado: 20, nombre: 'D' },
       ];
 
       // Renderiza la vista y pasa los datos
@@ -1189,7 +1145,7 @@ app.get('/horarios', (req, res) => {
         console.log('Grados:', grados);
 
         // Consulta para obtener solo las secciones A, B, C y D usando sus id_seccion
-        db.query('SELECT * FROM secciones WHERE id_seccion IN (153, 154, 155, 233)', (error, seccionesRows) => {
+        db.query('SELECT * FROM secciones WHERE id_seccion IN (10, 11, 12, 22)', (error, seccionesRows) => {
           if (error) {
             console.error('Error al obtener la lista de secciones:', error);
             return res.status(500).send('Error al obtener la lista de secciones');
@@ -1204,7 +1160,7 @@ app.get('/horarios', (req, res) => {
               JOIN cursos c ON h.id_curso = c.id_curso 
               JOIN grados g ON h.id_grado = g.id_grado 
               JOIN secciones s ON h.id_seccion = s.id_seccion 
-              WHERE h.id_profesor = ? AND h.id_seccion IN (153, 154, 155, 233)`, [idProfesor], (error, horariosRows) => {
+              WHERE h.id_profesor = ? AND h.id_seccion IN (10, 11, 12, 22)`, [idProfesor], (error, horariosRows) => {
               if (error) {
                 console.error('Error al obtener los horarios:', error);
                 return res.status(500).send('Error al obtener los horarios');
